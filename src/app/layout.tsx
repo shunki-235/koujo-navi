@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   alternates: { canonical: "/" },
   openGraph: {
-    title: "控除ナビ - 確定申告の所得控除をかんたんに",
-    description: "医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金の控除額を自動計算。PDF/JSON出力に対応。",
+    title: "控除ナビ | 所得控除の自動計算とPDF出力",
+    description: "医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金の控除額を質問に答えるだけで自動計算。日本語フォント埋め込みPDF/JSONで保存できます。",
     url: "/",
     siteName: "控除ナビ",
     locale: "ja_JP",
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "控除ナビ - 確定申告の所得控除をかんたんに",
-    description: "医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金の控除額を自動計算。",
+    title: "控除ナビ | 所得控除の自動計算とPDF出力",
+    description: "質問に沿って入力するだけで主要な所得控除を自動計算。日本語対応PDFで保存。",
     images: ["/og.svg"],
   },
 };
