@@ -23,8 +23,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
-      - name: Start server
-        run: pnpm start &
+      - name: Start server (port 3000)
+        run: pnpm start -- -p 3000 &
       - name: Wait server ready
         run: npx wait-on http://localhost:3000 --timeout 120000
       - name: Run Lighthouse CI
