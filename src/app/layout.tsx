@@ -30,7 +30,6 @@ export default function RootLayout({
           <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
             <Link href="/" className="font-semibold tracking-tight text-gray-900">控除ナビ</Link>
             <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
-              <Link href="/deductions" className="hover:opacity-70">ダッシュボード</Link>
               <Link href="/deductions/flow" className="hover:opacity-70">入力</Link>
             </nav>
           </div>
