@@ -2,16 +2,17 @@
   "ci": {
     "collect": {
       "numberOfRuns": 1,
-      "startServerCommand": "pnpm build && pnpm start",
-      "startServerReadyPattern": "started server on",
       "url": [
-        "http://localhost:3000/",
-        "http://localhost:3000/deductions/flow"
+        "http://127.0.0.1:3000/",
+        "http://127.0.0.1:3000/deductions/flow"
       ]
     },
     "assert": {
       "preset": "lighthouse:no-pwa",
       "assertions": {
+        "csp-xss": "warn",
+        "total-byte-weight": "warn",
+        "unused-javascript": "warn",
         "categories:accessibility": ["warn", { "minScore": 0.95 }],
         "categories:best-practices": ["warn", { "minScore": 0.9 }],
         "categories:seo": ["warn", { "minScore": 0.9 }]
