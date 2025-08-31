@@ -33,6 +33,9 @@ importers:
         specifier: ^4.1.5
         version: 4.1.5
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.9.1
+        version: 4.10.2(playwright-core@1.55.0)
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.1
@@ -84,6 +87,11 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  '@axe-core/playwright@4.10.2':
+    resolution: {integrity: sha512-6/b5BJjG6hDaRNtgzLIfKr5DfwyiLHO4+ByTLB0cJgWSM8Ll7KqtdblIS6bEkwSF642/Ex91vNqIl3GLXGlceg==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -2436,6 +2444,11 @@ snapshots:
   '@adobe/css-tools@4.4.4': {}
 
   '@alloc/quick-lru@5.2.0': {}
+
+  '@axe-core/playwright@4.10.2(playwright-core@1.55.0)':
+    dependencies:
+      axe-core: 4.10.3
+      playwright-core: 1.55.0
 
   '@babel/code-frame@7.27.1':
     dependencies:
