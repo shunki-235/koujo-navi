@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     siteName: "控除ナビ",
     locale: "ja_JP",
     type: "website",
-    images: [{ url: "/vercel.svg", width: 1200, height: 630, alt: "控除ナビ" }],
+    images: [{ url: "/og.svg", width: 1200, height: 630, alt: "控除ナビ" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "控除ナビ - 確定申告の所得控除をかんたんに",
     description: "医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金の控除額を自動計算。",
-    images: ["/vercel.svg"],
+    images: ["/og.svg"],
   },
 };
 
