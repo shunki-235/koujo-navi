@@ -23,11 +23,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="ja">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
+        <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur shadow-sm">
+          <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
+            <a href="/" className="font-semibold tracking-tight text-blue-700">控除ナビ</a>
+            <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
+              <a href="/deductions" className="hover:text-blue-700">ダッシュボード</a>
+              <a href="/deductions/flow" className="hover:text-blue-700">入力</a>
+            </nav>
+          </div>
+        </header>
+        <main className="mx-auto max-w-5xl px-6 py-8">
+          {children}
+        </main>
+        <footer className="border-t py-8 text-center text-xs text-gray-500">© 控除ナビ</footer>
       </body>
     </html>
   );
