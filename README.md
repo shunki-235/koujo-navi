@@ -14,7 +14,32 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
+
+### Scripts
+
+```bash
+pnpm dev       # 開発サーバ
+pnpm build     # ビルド
+pnpm start     # 本番起動
+pnpm typecheck # 型チェック
+pnpm lint      # Lint
+pnpm test      # ユニットテスト（Vitest）
+pnpm e2e       # E2Eテスト（Playwright）
+```
+
+### 主要ルート
+
+- `/` トップ（導線/ハイライト/免責）
+- `/deductions/flow` 入力フロー（自動保存・計算・PDF/JSON出力）
+
+### PDFフォント
+
+`public/fonts/NotoSansJP-Regular.ttf` を読み込んで日本語を埋め込みます（サーバRuntime: nodejs）。
+
+### 免責
+
+本ツールの計算は参考値です。最終的な申告内容は国税庁の案内および申告書様式をご確認のうえご判断ください。住民税側の特例や詳細控除は対象外です。
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
