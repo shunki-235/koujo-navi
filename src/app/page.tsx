@@ -8,7 +8,7 @@ export default function Home() {
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">控除ナビ</h1>
           <p className="mt-2 text-base text-muted">質問に沿って入力するだけで、医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金の控除額を自動計算します。</p>
           <div className="flex flex-wrap gap-3 pt-5 text-sm">
-            <a href="/deductions/flow" className="btn btn-primary">すぐ入力を始める</a>
+            <a href="/deductions/flow" className="btn btn-primary">控除入力をはじめる</a>
             {/* ダッシュボード導線はTOP統一のため削除 */}
           </div>
           <div className="text-xs text-muted pt-4">対応: 医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金。</div>
