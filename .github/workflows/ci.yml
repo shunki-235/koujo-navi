@@ -14,9 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - name: Ensure pnpm on PATH
         run: |
+          npm i -g corepack@latest
           corepack enable
           corepack prepare pnpm@9 --activate
       - uses: pnpm/action-setup@v4
