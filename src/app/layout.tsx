@@ -25,12 +25,12 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
-        <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur shadow-sm">
+        <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur">
           <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
-            <a href="/" className="font-semibold tracking-tight text-blue-700">控除ナビ</a>
+            <a href="/" className="font-semibold tracking-tight text-gray-900">控除ナビ</a>
             <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
-              <a href="/deductions" className="hover:text-blue-700">ダッシュボード</a>
-              <a href="/deductions/flow" className="hover:text-blue-700">入力</a>
+              <a href="/deductions" className="hover:opacity-70">ダッシュボード</a>
+              <a href="/deductions/flow" className="hover:opacity-70">入力</a>
             </nav>
           </div>
         </header>
