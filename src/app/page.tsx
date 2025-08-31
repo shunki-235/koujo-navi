@@ -9,7 +9,7 @@ export default function Home() {
           <p className="mt-2 text-base text-muted">シンプルな入力で所得控除を自動計算。医療費・保険・寄附金などをまとめてサクッと。</p>
           <div className="flex flex-wrap gap-3 pt-5 text-sm">
             <a href="/deductions/flow" className="btn btn-primary">すぐ入力を始める</a>
-            <a href="/deductions" className="btn btn-outline">ダッシュボードを見る</a>
+            {/* ダッシュボード導線はTOP統一のため削除 */}
           </div>
           <div className="text-xs text-muted pt-4">対応: 医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金。</div>
         </div>
