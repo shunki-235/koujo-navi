@@ -45,6 +45,20 @@ export async function POST(req: NextRequest) {
     const right = width - 50;
     let y = height - 60;
 
+    const drawHr = (yy: number) => {
+      page.drawRectangle({ x: left, y: yy, width: right - left, height: 0.6, color: rgb(0.85, 0.85, 0.85) });
+    };
+
+    const drawTableHeader = () => {
+      const headerY = y;
+      page.drawText("内訳", { x: left, y: headerY, size: 12, font, color: rgb(0, 0, 0) });
+      const amtHeader = "金額(円)";
+      const ahw = font.widthOfTextAtSize(amtHeader, 12);
+      page.drawText(amtHeader, { x: right - ahw, y: headerY, size: 12, font, color: rgb(0.2, 0.2, 0.2) });
+      drawHr(headerY - 4);
+      y -= 16;
+    };
+
     const ensurePage = (advance: number) => {
       if (y - advance < 50) {
         page = pdfDoc.addPage([595.28, 841.89]);
@@ -53,6 +67,7 @@ export async function POST(req: NextRequest) {
         // ページヘッダ
         page.drawText("控除結果レポート", { x: left, y, size: 14, font, color: rgb(0, 0, 0) });
         y -= 20;
+        drawTableHeader();
       }
     };
 
@@ -74,21 +89,17 @@ export async function POST(req: NextRequest) {
     y -= 24;
 
     // テーブルヘッダ
-    const headerY = y;
-    page.drawText("内訳", { x: left, y: headerY, size: 12, font });
-    const amtHeader = "金額(円)";
-    const ahw = font.widthOfTextAtSize(amtHeader, 12);
-    page.drawText(amtHeader, { x: right - ahw, y: headerY, size: 12, font, color: rgb(0.2, 0.2, 0.2) });
-    y -= 16;
+    drawTableHeader();
 
     for (const item of result?.items ?? []) {
       const label = labelOf(item.key);
       const value = `${Number(item.amount).toLocaleString()}`;
-      ensurePage(16);
-      page.drawText(label, { x: left, y, size: 12, font });
+      ensurePage(20);
+      page.drawText(label, { x: left, y, size: 12, font, color: rgb(0, 0, 0) });
       const vw = font.widthOfTextAtSize(value, 12);
-      page.drawText(value, { x: right - vw, y, size: 12, font });
-      y -= 16;
+      page.drawText(value, { x: right - vw, y, size: 12, font, color: rgb(0, 0, 0) });
+      drawHr(y - 4);
+      y -= 20;
       if (item.notes && item.notes.length) {
         for (const n of item.notes) {
           const noteText = `・${n}`;
@@ -100,9 +111,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // フッター（最終ページ下部）
+    // フッター（各ページ: ページ番号、最終ページ: 発行日時）
     try {
       const pages = pdfDoc.getPages();
+      const total = pages.length;
+      pages.forEach((p, idx) => {
+        const footerY = 30;
+        const pageLabel = `${idx + 1} / ${total}`;
+        const pw = font.widthOfTextAtSize(pageLabel, 10);
+        p.drawText(pageLabel, { x: right - pw, y: footerY, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
+      });
       const last = pages[pages.length - 1];
       last.drawText(`発行日時: ${new Date().toLocaleString("ja-JP")}`,
         { x: left, y: 30, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
