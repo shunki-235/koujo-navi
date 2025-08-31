@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
       font = await pdfDoc.embedFont(fontBytes);
     } catch {}
     let { width, height } = page.getSize();
-    const left = 50;
-    const right = width - 50;
-    let y = height - 60;
+    const margin = 56; // 20mm程度
+    const left = margin;
+    const right = width - margin;
+    let y = height - margin;
 
     const drawHr = (yy: number) => {
       page.drawRectangle({ x: left, y: yy, width: right - left, height: 0.6, color: rgb(0.85, 0.85, 0.85) });
@@ -60,10 +61,10 @@ export async function POST(req: NextRequest) {
     };
 
     const ensurePage = (advance: number) => {
-      if (y - advance < 50) {
+      if (y - advance < margin) {
         page = pdfDoc.addPage([595.28, 841.89]);
         ({ width, height } = page.getSize());
-        y = height - 60;
+        y = height - margin;
         // ページヘッダ
         page.drawText("控除結果レポート", { x: left, y, size: 14, font, color: rgb(0, 0, 0) });
         y -= 20;
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
       const tw = font.widthOfTextAtSize(yearText, 12);
       page.drawText(yearText, { x: right - tw, y, size: 12, font, color: rgb(0.2, 0.2, 0.2) });
     }
-    y -= 26;
+    y -= 28;
 
     // 合計
     const totalText = `合計控除額`;
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
     page.drawText(totalText, { x: left, y, size: 14, font });
     const aw = font.widthOfTextAtSize(amountText, 14);
     page.drawText(amountText, { x: right - aw, y, size: 14, font });
-    y -= 24;
+    y -= 26;
 
     // テーブルヘッダ
     drawTableHeader();
@@ -98,12 +99,12 @@ export async function POST(req: NextRequest) {
       page.drawText(label, { x: left, y, size: 12, font, color: rgb(0, 0, 0) });
       const vw = font.widthOfTextAtSize(value, 12);
       page.drawText(value, { x: right - vw, y, size: 12, font, color: rgb(0, 0, 0) });
-      drawHr(y - 4);
-      y -= 20;
+      drawHr(y - 6);
+      y -= 22;
       if (item.notes && item.notes.length) {
         for (const n of item.notes) {
           const noteText = `・${n}`;
-          const advance = 14;
+          const advance = 15;
           ensurePage(advance);
           page.drawText(noteText, { x: left + 14, y, size: 11, font, color: rgb(0.3, 0.3, 0.3) });
           y -= advance;
@@ -116,14 +117,14 @@ export async function POST(req: NextRequest) {
       const pages = pdfDoc.getPages();
       const total = pages.length;
       pages.forEach((p, idx) => {
-        const footerY = 30;
+        const footerY = margin - 26;
         const pageLabel = `${idx + 1} / ${total}`;
         const pw = font.widthOfTextAtSize(pageLabel, 10);
         p.drawText(pageLabel, { x: right - pw, y: footerY, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
       });
       const last = pages[pages.length - 1];
       last.drawText(`発行日時: ${new Date().toLocaleString("ja-JP")}`,
-        { x: left, y: 30, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
+        { x: left, y: margin - 26, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
     } catch {}
 
     const pdfBytes = await pdfDoc.save();
