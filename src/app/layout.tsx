@@ -26,12 +26,13 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 btn btn-outline">本文へスキップ</a>
         <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur">
           <div className="mx-auto max-w-5xl px-6 h-14 flex items-center">
             <Link href="/" className="font-semibold tracking-tight text-gray-900">控除ナビ</Link>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-6 py-8">
+        <main id="main" className="mx-auto max-w-5xl px-6 py-8">
           {children}
         </main>
         <footer className="border-t py-8 text-center text-xs text-gray-500">© 控除ナビ</footer>
