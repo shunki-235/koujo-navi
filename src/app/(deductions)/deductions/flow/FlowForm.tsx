@@ -434,7 +434,7 @@ export function FlowForm() {
                     const res = await fetch("/api/export/deductions/pdf", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ result }),
+                      body: JSON.stringify({ result, taxYear: watched.taxYear ?? 2024 }),
                     });
                     if (!res.ok) return;
                     const blob = await res.blob();
