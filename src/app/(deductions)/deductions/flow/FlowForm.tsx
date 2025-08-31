@@ -1,0 +1,473 @@
+"use client";
+
+import { useEffect, useState, useTransition, type FocusEvent } from "react";
+import { useForm, type Path } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { DeductionsInput, DeductionsResult, TaxYear } from "@/types/deductions";
+import { getYearParams } from "@/lib/deductions/params";
+import { calculateDeductions } from "@/lib/deductions/calc";
+import { formatCurrencyYen } from "@/lib/deductions/calc/utils";
+import { z } from "zod";
+
+const flowFormSchema = z
+  .object({
+    taxYear: z.union([z.literal(2023), z.literal(2024), z.literal(2025)]),
+    totalIncome: z.number().int().min(0, "0以上で入力してください").nullable(),
+    medicalPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
+    medicalReimbursed: z.number().int().min(0, "0以上で入力してください").nullable(),
+    socialPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
+    idecoPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
+    sbmPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
+    lifeGeneral: z.number().int().min(0, "0以上で入力してください").nullable(),
+    lifePension: z.number().int().min(0, "0以上で入力してください").nullable(),
+    lifeMedical: z.number().int().min(0, "0以上で入力してください").nullable(),
+    lifeOld: z.number().int().min(0, "0以上で入力してください").nullable(),
+    quakePaid: z.number().int().min(0, "0以上で入力してください").nullable(),
+    quakeOld: z.number().int().min(0, "0以上で入力してください").nullable(),
+    donationHome: z.number().int().min(0, "0以上で入力してください").nullable(),
+    donationOther: z.number().int().min(0, "0以上で入力してください").nullable(),
+  })
+  .refine(
+    (data) => {
+      const paid = data.medicalPaid ?? 0;
+      const reimb = data.medicalReimbursed ?? 0;
+      return reimb <= paid;
+    },
+    { path: ["medicalReimbursed"], message: "補填額は支払額以下にしてください" }
+  );
+
+type FormValues = z.infer<typeof flowFormSchema>;
+
+function toIntOrNull(v: unknown): number | null {
+  if (v === "" || v == null) return null;
+  const s = typeof v === "string" ? v.replace(/,/g, "") : String(v);
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.trunc(n) : null;
+}
+
+function onCurrencyFocus(e: FocusEvent<HTMLInputElement>) {
+  e.currentTarget.value = e.currentTarget.value.replace(/,/g, "");
+}
+
+function onCurrencyBlur(e: FocusEvent<HTMLInputElement>) {
+  const n = toIntOrNull(e.currentTarget.value);
+  e.currentTarget.value = n != null ? formatCurrencyYen(n) : "";
+}
+
+export function FlowForm() {
+  const [result, setResult] = useState<DeductionsResult | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const STORAGE_KEY = "deductions-flow:v1";
+
+  const { register, handleSubmit, reset, watch, trigger, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(flowFormSchema),
+    defaultValues: {
+      taxYear: 2024,
+      totalIncome: 4000000,
+      medicalPaid: 300000,
+      medicalReimbursed: 50000,
+      socialPaid: 600000,
+      idecoPaid: 240000,
+      sbmPaid: 84000,
+      lifeGeneral: 50000,
+      lifePension: 40000,
+      lifeMedical: 30000,
+      lifeOld: 0,
+      quakePaid: 20000,
+      quakeOld: 0,
+      donationHome: 50000,
+      donationOther: 10000,
+    },
+  });
+
+  const steps: { key: string; label: string; fields: Path<FormValues>[] }[] = [
+    { key: "basic", label: "基本", fields: ["taxYear", "totalIncome"] },
+    { key: "medical", label: "医療費", fields: ["medicalPaid", "medicalReimbursed"] },
+    { key: "social", label: "社会保険等", fields: ["socialPaid", "idecoPaid", "sbmPaid"] },
+    { key: "life", label: "生命保険", fields: ["lifeGeneral", "lifePension", "lifeMedical", "lifeOld"] },
+    { key: "earthquake", label: "地震保険", fields: ["quakePaid", "quakeOld"] },
+    { key: "donation", label: "寄附金", fields: ["donationHome", "donationOther"] },
+    { key: "review", label: "確認", fields: [] },
+  ];
+  const [step, setStep] = useState(0);
+
+  // 初回マウント時に保存済みドラフトを復元
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<FormValues>;
+        reset({
+          taxYear: (parsed.taxYear ?? 2024) as FormValues["taxYear"],
+          totalIncome: parsed.totalIncome ?? 4000000,
+          medicalPaid: parsed.medicalPaid ?? 300000,
+          medicalReimbursed: parsed.medicalReimbursed ?? 50000,
+          socialPaid: parsed.socialPaid ?? 600000,
+          idecoPaid: parsed.idecoPaid ?? 240000,
+          sbmPaid: parsed.sbmPaid ?? 84000,
+          lifeGeneral: parsed.lifeGeneral ?? 50000,
+          lifePension: parsed.lifePension ?? 40000,
+          lifeMedical: parsed.lifeMedical ?? 30000,
+          lifeOld: parsed.lifeOld ?? 0,
+          quakePaid: parsed.quakePaid ?? 20000,
+          quakeOld: parsed.quakeOld ?? 0,
+          donationHome: parsed.donationHome ?? 50000,
+          donationOther: parsed.donationOther ?? 10000,
+        });
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 入力を監視して自動保存（500msデバウンス）
+  const watched = watch();
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(watched));
+        }
+      } catch {}
+    }, 500);
+    return () => clearTimeout(id);
+  }, [watched]);
+
+  const onSubmit = (values: FormValues) => {
+    const taxYear = values.taxYear ?? 2024;
+
+    const input: DeductionsInput = {
+      basic: { taxYear, totalIncome: toIntOrNull(values.totalIncome) },
+      medical: { paidTotal: toIntOrNull(values.medicalPaid) ?? 0, reimbursements: toIntOrNull(values.medicalReimbursed) ?? 0 },
+      socialInsurance: { paidTotal: toIntOrNull(values.socialPaid) ?? 0 },
+      iDeCo: { paidTotal: toIntOrNull(values.idecoPaid) ?? 0 },
+      smallBusinessMutualAid: { paidTotal: toIntOrNull(values.sbmPaid) ?? 0 },
+      lifeInsurance: {
+        general: toIntOrNull(values.lifeGeneral) ?? 0,
+        pension: toIntOrNull(values.lifePension) ?? 0,
+        medicalCare: toIntOrNull(values.lifeMedical) ?? 0,
+        oldSystem: toIntOrNull(values.lifeOld) ?? 0,
+      },
+      earthquakeInsurance: { paidTotal: toIntOrNull(values.quakePaid) ?? 0, oldSystem: toIntOrNull(values.quakeOld) ?? 0 },
+      donations: { hometown: toIntOrNull(values.donationHome) ?? 0, other: toIntOrNull(values.donationOther) ?? 0 },
+    };
+
+    const params = getYearParams(taxYear);
+    startTransition(() => {
+      const r = calculateDeductions(input, params);
+      setResult(r);
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="flex items-center gap-2 text-sm overflow-x-auto">
+          {steps.map((s, idx) => (
+            <div key={s.key} className={`px-3 py-1 border transition-colors ${idx === step ? "bg-blue-600 text-white" : "bg-white hover:bg-blue-50"}`}>
+              {idx + 1}. {s.label}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 max-w-3xl">
+          {step === 0 && (
+            <>
+          <label className="flex flex-col text-sm gap-1">
+            <span>年度</span>
+            <select className="border px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("taxYear", { setValueAs: (v) => Number(v) as TaxYear })} defaultValue={2024}>
+              <option value={2023}>2023</option>
+              <option value={2024}>2024</option>
+              <option value={2025}>2025</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              総所得金額等
+              <span className="ml-1 text-gray-400 cursor-help" title="医療費控除の足切り(10万円または所得の5%の小さい方)の計算に使用します。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("totalIncome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.totalIncome && <span className="text-xs text-red-600">{errors.totalIncome.message as string}</span>}
+          </label>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
+          <div className="col-span-2 font-medium mt-4">医療費控除</div>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              医療費(支払額)
+              <span className="ml-1 text-gray-400 cursor-help" title="対象医療費の自己負担分合計を入力します。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("medicalPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.medicalPaid && <span className="text-xs text-red-600">{errors.medicalPaid.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              医療費(補填額)
+              <span className="ml-1 text-gray-400 cursor-help" title="医療保険等で補填された金額を入力します。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("medicalReimbursed", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.medicalReimbursed && <span className="text-xs text-red-600">{errors.medicalReimbursed.message as string}</span>}
+          </label>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+          <div className="col-span-2 font-medium mt-4">社会保険・iDeCo・小規模共済</div>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              社会保険料 合計
+              <span className="ml-1 text-gray-400 cursor-help" title="国民年金、国民健康保険、介護保険等の自己負担分の合計。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("socialPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.socialPaid && <span className="text-xs text-red-600">{errors.socialPaid.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              iDeCo 掛金
+              <span className="ml-1 text-gray-400 cursor-help" title="年内に拠出した個人型確定拠出年金の掛金。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("idecoPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.idecoPaid && <span className="text-xs text-red-600">{errors.idecoPaid.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              小規模企業共済 掛金
+              <span className="ml-1 text-gray-400 cursor-help" title="年内に支払った小規模企業共済等の掛金。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("sbmPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.sbmPaid && <span className="text-xs text-red-600">{errors.sbmPaid.message as string}</span>}
+          </label>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+          <div className="col-span-2 font-medium mt-4">生命保険料控除</div>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              一般(新制度)
+              <span className="ml-1 text-gray-400 cursor-help" title="一般生命保険料(新制度)の支払額。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeGeneral", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifeGeneral && <span className="text-xs text-red-600">{errors.lifeGeneral.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              個人年金(新制度)
+              <span className="ml-1 text-gray-400 cursor-help" title="個人年金保険料(新制度)の支払額。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifePension", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifePension && <span className="text-xs text-red-600">{errors.lifePension.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              介護医療(新制度)
+              <span className="ml-1 text-gray-400 cursor-help" title="介護医療保険料(新制度)の支払額。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeMedical", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifeMedical && <span className="text-xs text-red-600">{errors.lifeMedical.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              旧制度
+              <span className="ml-1 text-gray-400 cursor-help" title="旧制度(2011年以前契約)の対象保険料。簡易計上。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifeOld && <span className="text-xs text-red-600">{errors.lifeOld.message as string}</span>}
+          </label>
+            </>
+          )}
+
+          {step === 4 && (
+            <>
+          <div className="col-span-2 font-medium mt-4">地震保険料控除</div>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              地震保険料(新制度)
+              <span className="ml-1 text-gray-400 cursor-help" title="当年分の地震保険料。上限あり。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("quakePaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.quakePaid && <span className="text-xs text-red-600">{errors.quakePaid.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              旧長期損害保険等
+              <span className="ml-1 text-gray-400 cursor-help" title="旧制度の長期損害保険等。上限あり。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("quakeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.quakeOld && <span className="text-xs text-red-600">{errors.quakeOld.message as string}</span>}
+          </label>
+            </>
+          )}
+
+          {step === 5 && (
+            <>
+          <div className="col-span-2 font-medium mt-4">寄附金控除</div>
+          <label className="flex flex-col text-sm gap-1">
+            <span>
+              ふるさと納税
+              <span className="ml-1 text-gray-400 cursor-help" title="住民税側の特例控除はMVP対象外です。">?</span>
+            </span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("donationHome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.donationHome && <span className="text-xs text-red-600">{errors.donationHome.message as string}</span>}
+          </label>
+          <label className="flex flex-col text-sm gap-1">
+            <span>その他寄附</span>
+            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("donationOther", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.donationOther && <span className="text-xs text-red-600">{errors.donationOther.message as string}</span>}
+          </label>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              className="inline-flex items-center border px-4 py-2 text-sm hover:bg-blue-50"
+            >
+              戻る
+            </button>
+          )}
+          {step < steps.length - 1 && (
+            <button
+              type="button"
+              onClick={async () => {
+                const valid = await trigger(steps[step].fields);
+                if (valid) setStep((s) => Math.min(steps.length - 1, s + 1));
+              }}
+              className="inline-flex items-center bg-blue-600 text-white px-4 py-2 text-sm shadow hover:bg-blue-700"
+            >
+              次へ
+            </button>
+          )}
+          {step === steps.length - 1 && (
+            <button disabled={isPending} className="inline-flex items-center bg-blue-600 text-white px-4 py-2 text-sm shadow hover:bg-blue-700 disabled:opacity-70">
+              {isPending ? "計算中..." : "計算する"}
+            </button>
+          )}
+          <div className="ml-auto text-xs text-gray-500">
+            自動保存: {new Date().toLocaleTimeString()}
+          </div>
+        </div>
+      </form>
+
+      {result && (
+        <div className="border p-0 overflow-hidden shadow-sm">
+          <div className="sticky top-0 bg-white/80 backdrop-blur p-4 flex items-center justify-between">
+            <div className="font-semibold">計算結果</div>
+            <div className="text-base">
+              合計控除額: <span className="font-bold">{result.total.toLocaleString()} 円</span>
+            </div>
+          </div>
+          <div className="p-4 space-y-3">
+            <ul className="space-y-2 text-sm">
+              {result.items.map((i) => (
+                <li key={i.key} className="">
+                  <div className="flex items-center justify-between">
+                    <span>{labelOf(i.key)}</span>
+                    <span>{formatCurrencyYen(i.amount)} 円</span>
+                  </div>
+                  {i.notes && i.notes.length > 0 && (
+                    <ul className="list-disc pl-5 mt-1 text-gray-500">
+                      {i.notes.map((n, idx) => (
+                        <li key={idx}>{n}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem(STORAGE_KEY);
+                  }
+                  reset();
+                  setResult(null);
+                }}
+                className="text-sm underline"
+              >
+                入力をクリア
+              </button>
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!result) return;
+                    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "deductions-result.json";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="inline-flex items-center border px-3 py-2 text-sm hover:bg-blue-50"
+                >
+                  JSONをダウンロード
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!result) return;
+                    const res = await fetch("/api/export/deductions/pdf", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ result }),
+                    });
+                    if (!res.ok) return;
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "deductions-result.pdf";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="inline-flex items-center border px-3 py-2 text-sm hover:bg-blue-50"
+                >
+                  PDFをダウンロード
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function labelOf(key: DeductionsResult["items"][number]["key"]): string {
+  switch (key) {
+    case "medical":
+      return "医療費控除";
+    case "socialInsurance":
+      return "社会保険料控除";
+    case "iDeCo":
+      return "iDeCo掛金控除";
+    case "smallBusinessMutualAid":
+      return "小規模企業共済等掛金控除";
+    case "lifeInsurance":
+      return "生命保険料控除";
+    case "earthquakeInsurance":
+      return "地震保険料控除";
+    case "donations":
+      return "寄附金控除(所得税)";
+    default:
+      return key;
+  }
+}
+
+
