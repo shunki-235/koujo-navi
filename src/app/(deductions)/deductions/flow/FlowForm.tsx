@@ -9,34 +9,37 @@ import { calculateDeductions } from "@/lib/deductions/calc";
 import { formatCurrencyYen } from "@/lib/deductions/calc/utils";
 import { z } from "zod";
 
-// 入力文字列(カンマ含む)を整数 or null に前処理するヘルパー
-const intNullable = z.preprocess((raw: unknown) => {
-  if (raw === "" || raw == null) return null;
-  const source = typeof raw === "string" ? raw : String(raw);
-  // 全角→半角、カンマ・空白除去
-  const zenkakuToHankaku = source.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xFEE0));
-  const normalized = zenkakuToHankaku.replace(/[\s,]/g, "");
-  const n = Number(normalized);
-  return Number.isFinite(n) ? Math.trunc(n) : Number.NaN;
-}, z.number().int("整数で入力してください").min(0, "0以上で入力してください").nullable());
+// 入力文字列を正規化 → 数値文字列判定 → 数値変換（未入力・非数値のメッセージを明示）
+const requiredInt = z.preprocess((raw: unknown) => (raw == null ? "" : String(raw)),
+  z
+    .string()
+    .trim()
+    .min(1, "未入力の場合は0を入力してください")
+    .transform((s) => s.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xFEE0)))
+    .transform((s) => s.replace(/[\s,]/g, ""))
+    .refine((s) => /^\d+$/.test(s), { message: "入力できるのは数字のみです" })
+    .transform((s) => Number.parseInt(s, 10))
+    .refine((n) => Number.isInteger(n), { message: "整数で入力してください" })
+    .refine((n) => n >= 0, { message: "0以上で入力してください" })
+);
 
 const flowFormSchema = z
   .object({
     taxYear: z.union([z.literal(2023), z.literal(2024), z.literal(2025)]),
-    totalIncome: intNullable.refine((v) => v !== null, { message: "入力してください" }),
-    medicalPaid: intNullable,
-    medicalReimbursed: intNullable,
-    socialPaid: intNullable,
-    idecoPaid: intNullable,
-    sbmPaid: intNullable,
-    lifeGeneral: intNullable,
-    lifePension: intNullable,
-    lifeMedical: intNullable,
-    lifeOld: intNullable,
-    quakePaid: intNullable,
-    quakeOld: intNullable,
-    donationHome: intNullable,
-    donationOther: intNullable,
+    totalIncome: requiredInt,
+    medicalPaid: requiredInt,
+    medicalReimbursed: requiredInt,
+    socialPaid: requiredInt,
+    idecoPaid: requiredInt,
+    sbmPaid: requiredInt,
+    lifeGeneral: requiredInt,
+    lifePension: requiredInt,
+    lifeMedical: requiredInt,
+    lifeOld: requiredInt,
+    quakePaid: requiredInt,
+    quakeOld: requiredInt,
+    donationHome: requiredInt,
+    donationOther: requiredInt,
   })
   .refine(
     (data) => {
@@ -124,11 +127,11 @@ export function FlowForm() {
   );
   const requiredFieldsByStep: Record<string, Path<FormValues>[]> = {
     basic: ["totalIncome"],
-    medical: [],
-    social: [],
-    life: [],
-    earthquake: [],
-    donation: [],
+    medical: ["medicalPaid", "medicalReimbursed"],
+    social: ["socialPaid", "idecoPaid", "sbmPaid"],
+    life: ["lifeGeneral", "lifePension", "lifeMedical", "lifeOld"],
+    earthquake: ["quakePaid", "quakeOld"],
+    donation: ["donationHome", "donationOther"],
     review: [],
   };
   const [step, setStep] = useState(0);
