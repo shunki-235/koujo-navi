@@ -16,6 +16,8 @@ test("未保存離脱→自動復元が機能する", async ({ page }) => {
   expect(saved).toContain("1234567");
 
   await page.reload();
+  // 復元プロンプトに従って復元を実行
+  await page.getByRole("button", { name: "復元する" }).click();
 
   const value = await incomeInput.inputValue();
   expect(value.replace(/,/g, "")).toBe("1234567");
