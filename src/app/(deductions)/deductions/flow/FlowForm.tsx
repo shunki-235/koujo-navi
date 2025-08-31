@@ -172,7 +172,7 @@ export function FlowForm() {
         {errorMessages.length > 0 && (
           <div role="alert" aria-live="polite" className="card p-3" aria-atomic="true">
             <div className="text-sm font-semibold">入力エラーがあります</div>
-            <ul className="list-disc pl-5 mt-1 text-sm text-red-700">
+            <ul className="list-disc pl-5 mt-1 text-sm text-danger">
               {errorMessages.slice(0, 5).map((m, i) => (
                 <li key={i}>{m}</li>
               ))}

@@ -4,7 +4,7 @@
   /* Base palette */
   --background: #ffffff;
   --foreground: #0f172a; /* slate-900 */
-  --muted: #64748b;      /* slate-500 */
+  --muted: #475569;      /* slate-600: 小文字でも4.5:1以上のコントラストを確保 */
   --border: #e2e8f0;     /* slate-200 */
   --surface: #ffffff;    /* cards */
 
@@ -70,8 +70,8 @@ h1,h2,h3 { letter-spacing: -0.01em; }
 .btn:focus { outline: none; box-shadow: 0 0 0 4px var(--ring); }
 .btn-primary { background: var(--primary-600); color: #fff; }
 .btn-primary:hover { background: var(--primary-700); }
-.btn-outline { background: transparent; border-color: var(--border); color: var(--foreground); }
-.btn-outline:hover { background: var(--primary-50); border-color: #bfdbfe; }
+.btn-outline { background: transparent; border-color: #94a3b8; color: var(--foreground); }
+.btn-outline:hover { background: var(--primary-50); border-color: #60a5fa; }
 
 /* Badges */
 .badge { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
@@ -81,6 +81,8 @@ h1,h2,h3 { letter-spacing: -0.01em; }
 /* Links */
 a.link { color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; }
 a.link:hover { opacity: .75; }
+a.link:focus { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+.text-danger { color: #b91c1c; }
 
 /* Form controls */
 .input, .select {
