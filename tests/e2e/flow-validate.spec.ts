@@ -4,6 +4,7 @@ test("バリデーションエラーで次へが進めない", async ({ page }) 
   await page.goto("/deductions/flow");
 
   // 基本→医療費へ
+  await page.locator("label:has-text('総所得金額等') >> input").fill("0");
   await page.getByText("次へ").click();
 
   // 医療費(補填額) > 支払額 にしてみる

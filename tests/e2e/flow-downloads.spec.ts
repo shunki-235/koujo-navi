@@ -11,7 +11,26 @@ test("JSON のダウンロードトリガを検知できる", async ({ page, con
   });
 
   await page.goto("/deductions/flow");
-  for (let i = 0; i < 6; i++) await page.getByText("次へ").click();
+  await page.locator("label:has-text('総所得金額等') >> input").fill("0");
+  await page.getByText("次へ").click();
+  await page.locator("label:has-text('医療費(支払額)') >> input").fill("0");
+  await page.locator("label:has-text('医療費(補填額)') >> input").fill("0");
+  await page.getByText("次へ").click();
+  await page.locator("label:has-text('社会保険料 合計') >> input").fill("0");
+  await page.locator("label:has-text('iDeCo 掛金') >> input").fill("0");
+  await page.locator("label:has-text('小規模企業共済 掛金') >> input").fill("0");
+  await page.getByText("次へ").click();
+  await page.locator("label:has-text('一般(新制度)') >> input").fill("0");
+  await page.locator("label:has-text('個人年金(新制度)') >> input").fill("0");
+  await page.locator("label:has-text('介護医療(新制度)') >> input").fill("0");
+  await page.locator("label:has-text('旧制度') >> input").fill("0");
+  await page.getByText("次へ").click();
+  await page.locator("label:has-text('地震保険料(新制度)') >> input").fill("0");
+  await page.locator("label:has-text('旧長期損害保険等') >> input").fill("0");
+  await page.getByText("次へ").click();
+  await page.locator("label:has-text('ふるさと納税') >> input").fill("0");
+  await page.locator("label:has-text('その他寄附') >> input").fill("0");
+  await page.getByText("次へ").click();
   await page.getByRole("button", { name: "計算する" }).click();
 
   await page.getByRole("button", { name: "JSONをダウンロード" }).click();
