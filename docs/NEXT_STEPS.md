@@ -1,0 +1,94 @@
+## 控除ナビ: 次にやること（MVP仕上げ〜拡張）
+
+### 目的
+
+MVPをプロダクション水準に仕上げ、将来の拡張（OCR/CSV/PDF体裁/連携）に耐える基盤を固める。
+
+---
+
+## 優先度A（必須・先に着手）
+
+- **年度パラメータの監査/更新**
+  - 対象: `src/lib/deductions/params/{y2023,y2024,y2025}.ts`
+  - 生命保険・地震保険・医療費（足切り・上限）などを最新法令で再確認しソース（国税庁/各制度要綱）をREADMEに明記。
+
+- **計算ロジックの単体テスト**（境界値・相関）
+  - 追加: `vitest`/`@testing-library/jest-dom`
+  - 対象: `src/lib/deductions/calc/*`
+  - ケース例: 医療費の足切り境界、生命保険(各段階/合算上限/旧制度上限)、寄附金の2,000円控除、地震保険の上限。
+
+- **E2Eテスト（Playwright）**
+  - シナリオ: 入力〜計算〜JSON/PDFダウンロード、未保存離脱→自動復元、検証エラーのブロック。
+  - ルート: `/deductions/flow` を主対象。
+
+- **入力の通貨フォーマット（見た目の千区切り）**
+  - 方針: 入力は数値、表示はフォーマット（`onBlur`整形/`setValueAs`）。
+  - 対象: すべての金額フィールド（FlowForm）。
+
+- **PDF体裁の改善（日本語フォント）**
+  - `pdf-lib`でNotoSansJP等を埋め込み（サーバーの`public/fonts`等から読み込み）。
+  - レイアウト: タイトル/年度/合計/内訳テーブル/注記、フッターに発行日時。
+
+- **アクセシビリティ/UX**
+  - ラベル関連属性、エラーの`aria-live`、フォーカス管理、キーボード移動最適化。
+
+---
+
+## 優先度B（推奨・品質向上）
+
+- **ステップ完了インジケータ**
+  - 各ステップの必須項目が妥当なら完了バッジ表示。未完了はハイライト。
+
+- **UI整備とコンポーネント化**
+  - `shadcn/ui`導入、ボタン/入力/カードを共通化、トースト通知（保存/エラー）。
+
+- **監査/観測**
+  - リクエストID、簡易操作ログ、計算条件ハッシュ。
+
+- **i18n**
+  - `next-intl`で日本語/英語の切替。
+
+---
+
+## 優先度C（拡張）
+
+- **CSVインポート**（銀行・カード・会計ソフト）→ 収支・保険料の粗取込み
+- **レシートOCR**（外部API連携）→ 医療費/寄附の入力補助
+- **e-Tax向けデータ出力**（将来）
+- **認証/永続化**（NextAuth + DB）→ 複数デバイス/税理士共有
+
+---
+
+## タスク詳細（抜粋）
+
+- テスト導入
+  - 依存: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom playwright`
+  - スクリプト: `"test": "vitest", "e2e": "playwright test"`
+  - 追加ディレクトリ: `tests/unit/`, `tests/e2e/`
+
+- PDF改善
+  - フォント配置: `public/fonts/NotoSansJP-Regular.ttf`
+  - 読込と埋込: `src/app/api/export/deductions/pdf/route.ts`
+
+- 入力フォーマット
+  - `FlowForm`で`onBlur`時にカンマ整形。保存値は数値を維持。
+
+---
+
+## 受け入れ基準（DoD）
+
+- 単体/E2Eテストがグリーン（境界値カバー）
+- 年度パラメータに根拠リンク/備考が付記されている
+- 主要フローはA11y観点で致命的障害なし（キーボード操作可）
+- PDF出力に日本語フォントが埋め込まれ、印刷/配布に耐える
+- ビルド/型チェック/リンタがCIで自動実行・パス
+
+---
+
+## 参考（現状の主なファイル）
+
+- 画面: `src/app/(deductions)/deductions/*`, `src/app/page.tsx`
+- 型/パラメータ: `src/types/deductions.ts`, `src/lib/deductions/params/*`
+- 計算: `src/lib/deductions/calc/*`
+- スキーマ: `src/lib/deductions/schema.ts`
+- PDF API: `src/app/api/export/deductions/pdf/route.ts`
