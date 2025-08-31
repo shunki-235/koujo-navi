@@ -14,28 +14,89 @@ const flowFormSchema = z
     taxYear: z.union([z.literal(2023), z.literal(2024), z.literal(2025)]),
     totalIncome: z
       .number()
-      .int()
+      .int("整数で入力してください")
       .min(0, "0以上で入力してください")
       .nullable()
+      .refine((v) => v === null || Number.isFinite(v), { path: ["totalIncome"], message: "数字のみで入力してください" })
       .refine((v) => v !== null, { path: ["totalIncome"], message: "入力してください" }),
-    medicalPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
+    medicalPaid: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["medicalPaid"], message: "数字のみで入力してください" }),
     medicalReimbursed: z
       .number()
-      .int()
+      .int("整数で入力してください")
       .min(0, "0以上で入力してください")
       .nullable()
-      .refine((v) => v !== null, { path: ["medicalReimbursed"], message: "入力してください" }),
-    socialPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
-    idecoPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
-    sbmPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
-    lifeGeneral: z.number().int().min(0, "0以上で入力してください").nullable(),
-    lifePension: z.number().int().min(0, "0以上で入力してください").nullable(),
-    lifeMedical: z.number().int().min(0, "0以上で入力してください").nullable(),
-    lifeOld: z.number().int().min(0, "0以上で入力してください").nullable(),
-    quakePaid: z.number().int().min(0, "0以上で入力してください").nullable(),
-    quakeOld: z.number().int().min(0, "0以上で入力してください").nullable(),
-    donationHome: z.number().int().min(0, "0以上で入力してください").nullable(),
-    donationOther: z.number().int().min(0, "0以上で入力してください").nullable(),
+      .refine((v) => v == null || Number.isFinite(v), { path: ["medicalReimbursed"], message: "数字のみで入力してください" }),
+    socialPaid: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["socialPaid"], message: "数字のみで入力してください" }),
+    idecoPaid: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["idecoPaid"], message: "数字のみで入力してください" }),
+    sbmPaid: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["sbmPaid"], message: "数字のみで入力してください" }),
+    lifeGeneral: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["lifeGeneral"], message: "数字のみで入力してください" }),
+    lifePension: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["lifePension"], message: "数字のみで入力してください" }),
+    lifeMedical: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["lifeMedical"], message: "数字のみで入力してください" }),
+    lifeOld: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["lifeOld"], message: "数字のみで入力してください" }),
+    quakePaid: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["quakePaid"], message: "数字のみで入力してください" }),
+    quakeOld: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["quakeOld"], message: "数字のみで入力してください" }),
+    donationHome: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["donationHome"], message: "数字のみで入力してください" }),
+    donationOther: z
+      .number()
+      .int("整数で入力してください")
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v == null || Number.isFinite(v), { path: ["donationOther"], message: "数字のみで入力してください" }),
   })
   .refine(
     (data) => {
@@ -52,7 +113,8 @@ function toIntOrNull(v: unknown): number | null {
   if (v === "" || v == null) return null;
   const s = typeof v === "string" ? v.replace(/,/g, "") : String(v);
   const n = Number(s);
-  return Number.isFinite(n) ? Math.trunc(n) : null;
+  // 数字以外の文字列は NaN を返してZodでエラーにする
+  return Number.isFinite(n) ? Math.trunc(n) : Number.NaN;
 }
 
 function onCurrencyFocus(e: FocusEvent<HTMLInputElement>) {
@@ -61,7 +123,11 @@ function onCurrencyFocus(e: FocusEvent<HTMLInputElement>) {
 
 function onCurrencyBlur(e: FocusEvent<HTMLInputElement>) {
   const n = toIntOrNull(e.currentTarget.value);
-  e.currentTarget.value = n != null ? formatCurrencyYen(n) : "";
+  if (typeof n === "number" && Number.isFinite(n)) {
+    e.currentTarget.value = formatCurrencyYen(n);
+  } else if (n == null) {
+    e.currentTarget.value = "";
+  } // NaN の場合はそのまま残す（エラー表示のため）
 }
 
 export function FlowForm() {
@@ -104,6 +170,15 @@ export function FlowForm() {
     { key: "donation", label: "寄附金", fields: ["donationHome", "donationOther"] },
     { key: "review", label: "確認", fields: [] },
   ];
+  const requiredFieldsByStep: Record<string, Path<FormValues>[]> = {
+    basic: ["totalIncome"],
+    medical: [],
+    social: [],
+    life: [],
+    earthquake: [],
+    donation: [],
+    review: [],
+  };
   const [step, setStep] = useState(0);
   useEffect(() => {
     const first = steps[step]?.fields[0];
@@ -226,18 +301,23 @@ export function FlowForm() {
             {steps.map((s, idx) => {
               const isSelected = idx === step;
               const isLast = idx === steps.length - 1;
-              const isFieldsComplete = s.fields.length > 0 && s.fields.every((f) => {
+              const fieldsToCheck = (requiredFieldsByStep[s.key] ?? s.fields);
+              const isFieldsComplete = fieldsToCheck.length === 0 || fieldsToCheck.every((f) => {
                 const v = (watched as unknown as Record<string, unknown>)[f as string];
                 const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
                 return v !== null && v !== undefined && String(v) !== "" && !hasError;
               });
               const arePreviousStepsComplete = steps
                 .slice(0, steps.length - 1)
-                .every((ps) => ps.fields.length > 0 && ps.fields.every((f) => {
+                .every((ps) => {
+                  const prevFieldsToCheck = (requiredFieldsByStep[ps.key] ?? ps.fields);
+                  if (prevFieldsToCheck.length === 0) return true;
+                  return prevFieldsToCheck.every((f) => {
                   const v = (watched as unknown as Record<string, unknown>)[f as string];
                   const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
                   return v !== null && v !== undefined && String(v) !== "" && !hasError;
-                }));
+                  });
+                });
               const isComplete = isLast ? arePreviousStepsComplete : isFieldsComplete;
               const badgeText = isLast ? (isComplete ? "確認OK" : "確認待ち") : (isComplete ? "完了" : "未完了");
               return (
@@ -428,17 +508,18 @@ export function FlowForm() {
               type="button"
               onClick={async () => {
                 const fields = steps[step].fields;
+                const required = requiredFieldsByStep[steps[step].key] ?? fields;
                 const validByZod = await trigger(fields);
                 const hasErrors = fields.some((n) => (errors as unknown as Record<string, unknown>)[n as string]);
-                const firstEmpty = fields.find((n) => {
+                const firstEmptyRequired = required.find((n) => {
                   const v = (watched as unknown as Record<string, unknown>)[n as string];
                   return v === null || v === undefined || String(v) === "";
                 });
-                if (validByZod && !hasErrors && !firstEmpty) {
+                if (validByZod && !hasErrors && !firstEmptyRequired) {
                   setStep((s) => Math.min(steps.length - 1, s + 1));
                 } else {
                   const firstInvalid = fields.find((n) => (errors as unknown as Record<string, unknown>)[n as string]);
-                  const target = firstInvalid ?? firstEmpty;
+                  const target = firstInvalid ?? firstEmptyRequired;
                   if (target) setFocus(target);
                 }
               }}
