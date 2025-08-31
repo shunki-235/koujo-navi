@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, type FocusEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FocusEvent } from "react";
 import { useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DeductionsInput, DeductionsResult, TaxYear } from "@/types/deductions";
@@ -9,94 +9,31 @@ import { calculateDeductions } from "@/lib/deductions/calc";
 import { formatCurrencyYen } from "@/lib/deductions/calc/utils";
 import { z } from "zod";
 
+// 入力文字列(カンマ含む)を整数 or null に前処理するヘルパー
+const intNullable = z.preprocess((raw: unknown) => {
+  if (raw === "" || raw == null) return null;
+  const s = typeof raw === "string" ? raw.replace(/,/g, "") : String(raw);
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.trunc(n) : Number.NaN;
+}, z.number().int("整数で入力してください").min(0, "0以上で入力してください").nullable());
+
 const flowFormSchema = z
   .object({
     taxYear: z.union([z.literal(2023), z.literal(2024), z.literal(2025)]),
-    totalIncome: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v === null || Number.isFinite(v), { path: ["totalIncome"], message: "数字のみで入力してください" })
-      .refine((v) => v !== null, { path: ["totalIncome"], message: "入力してください" }),
-    medicalPaid: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["medicalPaid"], message: "数字のみで入力してください" }),
-    medicalReimbursed: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["medicalReimbursed"], message: "数字のみで入力してください" }),
-    socialPaid: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["socialPaid"], message: "数字のみで入力してください" }),
-    idecoPaid: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["idecoPaid"], message: "数字のみで入力してください" }),
-    sbmPaid: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["sbmPaid"], message: "数字のみで入力してください" }),
-    lifeGeneral: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["lifeGeneral"], message: "数字のみで入力してください" }),
-    lifePension: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["lifePension"], message: "数字のみで入力してください" }),
-    lifeMedical: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["lifeMedical"], message: "数字のみで入力してください" }),
-    lifeOld: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["lifeOld"], message: "数字のみで入力してください" }),
-    quakePaid: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["quakePaid"], message: "数字のみで入力してください" }),
-    quakeOld: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["quakeOld"], message: "数字のみで入力してください" }),
-    donationHome: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["donationHome"], message: "数字のみで入力してください" }),
-    donationOther: z
-      .number()
-      .int("整数で入力してください")
-      .min(0, "0以上で入力してください")
-      .nullable()
-      .refine((v) => v == null || Number.isFinite(v), { path: ["donationOther"], message: "数字のみで入力してください" }),
+    totalIncome: intNullable.refine((v) => v !== null, { message: "入力してください" }),
+    medicalPaid: intNullable,
+    medicalReimbursed: intNullable,
+    socialPaid: intNullable,
+    idecoPaid: intNullable,
+    sbmPaid: intNullable,
+    lifeGeneral: intNullable,
+    lifePension: intNullable,
+    lifeMedical: intNullable,
+    lifeOld: intNullable,
+    quakePaid: intNullable,
+    quakeOld: intNullable,
+    donationHome: intNullable,
+    donationOther: intNullable,
   })
   .refine(
     (data) => {
@@ -107,13 +44,13 @@ const flowFormSchema = z
     { path: ["medicalReimbursed"], message: "補填額は支払額以下にしてください" }
   );
 
-type FormValues = z.infer<typeof flowFormSchema>;
+type FormValues = z.input<typeof flowFormSchema>;
 
 function toIntOrNull(v: unknown): number | null {
   if (v === "" || v == null) return null;
   const s = typeof v === "string" ? v.replace(/,/g, "") : String(v);
   const n = Number(s);
-  // 数字以外の文字列は NaN を返してZodでエラーにする
+  // 数字以外の文字列は NaN を返して Zod の数値エラーを出す
   return Number.isFinite(n) ? Math.trunc(n) : Number.NaN;
 }
 
@@ -135,6 +72,7 @@ export function FlowForm() {
   const [isPending, startTransition] = useTransition();
   const [restoreCandidate, setRestoreCandidate] = useState<Partial<FormValues> | null>(null);
   const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string>("");
 
   const STORAGE_KEY = "deductions-flow:v1";
 
@@ -169,15 +107,18 @@ export function FlowForm() {
     },
   });
 
-  const steps: { key: string; label: string; fields: Path<FormValues>[] }[] = [
-    { key: "basic", label: "基本", fields: ["taxYear", "totalIncome"] },
-    { key: "medical", label: "医療費", fields: ["medicalPaid", "medicalReimbursed"] },
-    { key: "social", label: "社会保険等", fields: ["socialPaid", "idecoPaid", "sbmPaid"] },
-    { key: "life", label: "生命保険", fields: ["lifeGeneral", "lifePension", "lifeMedical", "lifeOld"] },
-    { key: "earthquake", label: "地震保険", fields: ["quakePaid", "quakeOld"] },
-    { key: "donation", label: "寄附金", fields: ["donationHome", "donationOther"] },
-    { key: "review", label: "確認", fields: [] },
-  ];
+  const steps: { key: string; label: string; fields: Path<FormValues>[] }[] = useMemo(
+    () => [
+      { key: "basic", label: "基本", fields: ["taxYear", "totalIncome"] },
+      { key: "medical", label: "医療費", fields: ["medicalPaid", "medicalReimbursed"] },
+      { key: "social", label: "社会保険等", fields: ["socialPaid", "idecoPaid", "sbmPaid"] },
+      { key: "life", label: "生命保険", fields: ["lifeGeneral", "lifePension", "lifeMedical", "lifeOld"] },
+      { key: "earthquake", label: "地震保険", fields: ["quakePaid", "quakeOld"] },
+      { key: "donation", label: "寄附金", fields: ["donationHome", "donationOther"] },
+      { key: "review", label: "確認", fields: [] },
+    ],
+    []
+  );
   const requiredFieldsByStep: Record<string, Path<FormValues>[]> = {
     basic: ["totalIncome"],
     medical: [],
@@ -191,8 +132,7 @@ export function FlowForm() {
   useEffect(() => {
     const first = steps[step]?.fields[0];
     if (first) setFocus(first);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  }, [step, setFocus, steps]);
 
   // 初回マウント時: 保存済みドラフトがあれば復元選択を提示
   useEffect(() => {
@@ -220,7 +160,6 @@ export function FlowForm() {
         setShowRestorePrompt(true);
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 入力を監視して自動保存（500msデバウンス）
@@ -230,6 +169,7 @@ export function FlowForm() {
       try {
         if (typeof window !== "undefined") {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(watched));
+          setLastSavedAt(new Date().toLocaleTimeString());
         }
       } catch {}
     }, 500);
@@ -610,19 +550,9 @@ export function FlowForm() {
               type="button"
               onClick={async () => {
                 const fields = steps[step].fields;
-                const required = requiredFieldsByStep[steps[step].key] ?? fields;
-                const validByZod = await trigger(fields);
-                const hasErrors = fields.some((n) => (errors as unknown as Record<string, unknown>)[n as string]);
-                const firstEmptyRequired = required.find((n) => {
-                  const v = (watched as unknown as Record<string, unknown>)[n as string];
-                  return v === null || v === undefined || String(v) === "";
-                });
-                if (validByZod && !hasErrors && !firstEmptyRequired) {
+                const ok = await trigger(fields, { shouldFocus: true });
+                if (ok) {
                   setStep((s) => Math.min(steps.length - 1, s + 1));
-                } else {
-                  const firstInvalid = fields.find((n) => (errors as unknown as Record<string, unknown>)[n as string]);
-                  const target = firstInvalid ?? firstEmptyRequired;
-                  if (target) setFocus(target);
                 }
               }}
               className="btn btn-primary"
@@ -661,7 +591,9 @@ export function FlowForm() {
           >
             サンプル値を入れる
           </button>
-          <div className="ml-auto text-xs text-gray-500">自動保存: {new Date().toLocaleTimeString()}</div>
+          <div className="ml-auto text-xs text-gray-500" suppressHydrationWarning>
+            自動保存: {lastSavedAt || "-"}
+          </div>
         </div>
       </form>
 

@@ -5,13 +5,20 @@ import { calculateDeductions } from "@/lib/deductions/calc";
 import { deductionsInputSchema } from "@/lib/deductions/schema";
 import type { DeductionsInput } from "@/types/deductions";
 
+function toIntOrNull(v: unknown): number | null {
+  if (v === "" || v == null) return null;
+  const s = typeof v === "string" ? v.replace(/,/g, "") : String(v);
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.trunc(n) : null;
+}
+
 export async function runSampleCalculation(formData: FormData): Promise<void> {
   const year = Number(formData.get("taxYear") ?? 2024);
   const params = getYearParams(year);
 
   const parsed = deductionsInputSchema.parse({
-    basic: { taxYear: year as 2023 | 2024 | 2025, totalIncome: Number(formData.get("totalIncome") ?? 0) },
-    medical: { paidTotal: Number(formData.get("medicalPaid") ?? 0), reimbursements: Number(formData.get("medicalReimbursed") ?? 0) },
+    basic: { taxYear: year as 2023 | 2024 | 2025, totalIncome: toIntOrNull(formData.get("totalIncome")) },
+    medical: { paidTotal: toIntOrNull(formData.get("medicalPaid")), reimbursements: toIntOrNull(formData.get("medicalReimbursed")) },
   });
 
   const input: DeductionsInput = parsed as DeductionsInput;
