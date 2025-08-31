@@ -3,7 +3,8 @@
     "collect": {
       "numberOfRuns": 1,
       "startServerCommand": "pnpm build && pnpm start",
-      "startServerReadyPattern": "started server on",
+      "startServerReadyPattern": "- Local:\\s*http://localhost:3000",
+      "startServerReadyTimeout": 120000,
       "url": [
         "http://localhost:3000/",
         "http://localhost:3000/deductions/flow"
