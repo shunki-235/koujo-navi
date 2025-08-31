@@ -57,6 +57,8 @@ function onCurrencyBlur(e: FocusEvent<HTMLInputElement>) {
 export function FlowForm() {
   const [result, setResult] = useState<DeductionsResult | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [restoreCandidate, setRestoreCandidate] = useState<Partial<FormValues> | null>(null);
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
 
   const STORAGE_KEY = "deductions-flow:v1";
 
@@ -64,20 +66,20 @@ export function FlowForm() {
     resolver: zodResolver(flowFormSchema),
     defaultValues: {
       taxYear: 2024,
-      totalIncome: 4000000,
-      medicalPaid: 300000,
-      medicalReimbursed: 50000,
-      socialPaid: 600000,
-      idecoPaid: 240000,
-      sbmPaid: 84000,
-      lifeGeneral: 50000,
-      lifePension: 40000,
-      lifeMedical: 30000,
-      lifeOld: 0,
-      quakePaid: 20000,
-      quakeOld: 0,
-      donationHome: 50000,
-      donationOther: 10000,
+      totalIncome: null,
+      medicalPaid: null,
+      medicalReimbursed: null,
+      socialPaid: null,
+      idecoPaid: null,
+      sbmPaid: null,
+      lifeGeneral: null,
+      lifePension: null,
+      lifeMedical: null,
+      lifeOld: null,
+      quakePaid: null,
+      quakeOld: null,
+      donationHome: null,
+      donationOther: null,
     },
   });
 
@@ -97,29 +99,30 @@ export function FlowForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  // 初回マウント時に保存済みドラフトを復元
+  // 初回マウント時: 保存済みドラフトがあれば復元選択を提示
   useEffect(() => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<FormValues>;
-        reset({
+        setRestoreCandidate({
           taxYear: (parsed.taxYear ?? 2024) as FormValues["taxYear"],
-          totalIncome: parsed.totalIncome ?? 4000000,
-          medicalPaid: parsed.medicalPaid ?? 300000,
-          medicalReimbursed: parsed.medicalReimbursed ?? 50000,
-          socialPaid: parsed.socialPaid ?? 600000,
-          idecoPaid: parsed.idecoPaid ?? 240000,
-          sbmPaid: parsed.sbmPaid ?? 84000,
-          lifeGeneral: parsed.lifeGeneral ?? 50000,
-          lifePension: parsed.lifePension ?? 40000,
-          lifeMedical: parsed.lifeMedical ?? 30000,
-          lifeOld: parsed.lifeOld ?? 0,
-          quakePaid: parsed.quakePaid ?? 20000,
-          quakeOld: parsed.quakeOld ?? 0,
-          donationHome: parsed.donationHome ?? 50000,
-          donationOther: parsed.donationOther ?? 10000,
+          totalIncome: parsed.totalIncome ?? null,
+          medicalPaid: parsed.medicalPaid ?? null,
+          medicalReimbursed: parsed.medicalReimbursed ?? null,
+          socialPaid: parsed.socialPaid ?? null,
+          idecoPaid: parsed.idecoPaid ?? null,
+          sbmPaid: parsed.sbmPaid ?? null,
+          lifeGeneral: parsed.lifeGeneral ?? null,
+          lifePension: parsed.lifePension ?? null,
+          lifeMedical: parsed.lifeMedical ?? null,
+          lifeOld: parsed.lifeOld ?? null,
+          quakePaid: parsed.quakePaid ?? null,
+          quakeOld: parsed.quakeOld ?? null,
+          donationHome: parsed.donationHome ?? null,
+          donationOther: parsed.donationOther ?? null,
         });
+        setShowRestorePrompt(true);
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,15 +182,52 @@ export function FlowForm() {
             </ul>
           </div>
         )}
+        {showRestorePrompt && (
+          <div className="card p-3 flex items-center gap-3" role="status" aria-live="polite">
+            <div className="text-sm">前回の入力内容が見つかりました。復元しますか？</div>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                if (restoreCandidate) {
+                  reset(restoreCandidate as FormValues);
+                }
+                setShowRestorePrompt(false);
+              }}
+            >復元する</button>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                try {
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem(STORAGE_KEY);
+                  }
+                } catch {}
+                setShowRestorePrompt(false);
+              }}
+            >破棄して新規</button>
+          </div>
+        )}
         <nav aria-label="ステップ">
           <ul className="flex items-center gap-6 text-sm overflow-x-auto">
             {steps.map((s, idx) => {
               const isSelected = idx === step;
-              const isComplete = s.fields.length > 0 && s.fields.every((f) => {
+              const isLast = idx === steps.length - 1;
+              const isFieldsComplete = s.fields.length > 0 && s.fields.every((f) => {
                 const v = (watched as unknown as Record<string, unknown>)[f as string];
                 const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
                 return v !== null && v !== undefined && String(v) !== "" && !hasError;
               });
+              const arePreviousStepsComplete = steps
+                .slice(0, steps.length - 1)
+                .every((ps) => ps.fields.length > 0 && ps.fields.every((f) => {
+                  const v = (watched as unknown as Record<string, unknown>)[f as string];
+                  const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
+                  return v !== null && v !== undefined && String(v) !== "" && !hasError;
+                }));
+              const isComplete = isLast ? arePreviousStepsComplete : isFieldsComplete;
+              const badgeText = isLast ? (isComplete ? "確認OK" : "確認待ち") : (isComplete ? "完了" : "未完了");
               return (
                 <li key={s.key} aria-current={isSelected ? "step" : undefined} className={`pb-2 ${isSelected ? "border-b-2 border-blue-600" : "border-b border-transparent"}`}>
                   <button
@@ -200,7 +240,7 @@ export function FlowForm() {
                   >
                     {idx + 1}. {s.label}
                   </button>
-                  <span className={`ml-2 align-middle badge ${isComplete ? "badge-primary" : "badge-neutral"}`}>{isComplete ? "完了" : "未完了"}</span>
+                  <span className={`ml-2 align-middle badge ${isComplete ? "badge-primary" : "badge-neutral"}`}>{badgeText}</span>
                 </li>
               );
             })}
@@ -375,11 +415,19 @@ export function FlowForm() {
             <button
               type="button"
               onClick={async () => {
-                const valid = await trigger(steps[step].fields);
-                if (valid) setStep((s) => Math.min(steps.length - 1, s + 1));
-                else {
-                  const firstInvalid = steps[step].fields.find((n) => (errors as unknown as Record<string, unknown>)[n as string]);
-                  if (firstInvalid) setFocus(firstInvalid);
+                const fields = steps[step].fields;
+                const validByZod = await trigger(fields);
+                const hasErrors = fields.some((n) => (errors as unknown as Record<string, unknown>)[n as string]);
+                const firstEmpty = fields.find((n) => {
+                  const v = (watched as unknown as Record<string, unknown>)[n as string];
+                  return v === null || v === undefined || String(v) === "";
+                });
+                if (validByZod && !hasErrors && !firstEmpty) {
+                  setStep((s) => Math.min(steps.length - 1, s + 1));
+                } else {
+                  const firstInvalid = fields.find((n) => (errors as unknown as Record<string, unknown>)[n as string]);
+                  const target = firstInvalid ?? firstEmpty;
+                  if (target) setFocus(target);
                 }
               }}
               className="btn btn-primary"
@@ -392,6 +440,32 @@ export function FlowForm() {
               {isPending ? "計算中..." : "計算する"}
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              const sample: FormValues = {
+                taxYear: 2024,
+                totalIncome: 4000000,
+                medicalPaid: 300000,
+                medicalReimbursed: 50000,
+                socialPaid: 600000,
+                idecoPaid: 240000,
+                sbmPaid: 84000,
+                lifeGeneral: 50000,
+                lifePension: 40000,
+                lifeMedical: 30000,
+                lifeOld: 0,
+                quakePaid: 20000,
+                quakeOld: 0,
+                donationHome: 50000,
+                donationOther: 10000,
+              };
+              reset(sample);
+            }}
+            className="btn btn-outline"
+          >
+            サンプル値を入れる
+          </button>
           <div className="ml-auto text-xs text-gray-500">
             自動保存: {new Date().toLocaleTimeString()}
           </div>
