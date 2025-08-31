@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run: pnpm build
       - name: Start server (bind 127.0.0.1:3000)
-        run: pnpm start -- -p 3000 -H 127.0.0.1 > .next_server.log 2>&1 &
+        run: pnpm exec next start -p 3000 -H 127.0.0.1 > .next_server.log 2>&1 &
       - name: Wait server ready (curl loop)
         run: |
           for i in {1..90}; do
