@@ -138,7 +138,15 @@ export function FlowForm() {
 
   const STORAGE_KEY = "deductions-flow:v1";
 
-  const { register, handleSubmit, reset, watch, trigger, setFocus, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    trigger,
+    setFocus,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(flowFormSchema),
     mode: "onChange",
     reValidateMode: "onChange",
@@ -254,7 +262,9 @@ export function FlowForm() {
     });
   };
 
-  const errorMessages = Object.values(errors).map((e) => String(e?.message ?? "")).filter(Boolean);
+  const errorMessages = Object.values(errors)
+    .map((e) => String(e?.message ?? ""))
+    .filter(Boolean);
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 card p-5">
@@ -281,7 +291,9 @@ export function FlowForm() {
                 }
                 setShowRestorePrompt(false);
               }}
-            >復元する</button>
+            >
+              復元する
+            </button>
             <button
               type="button"
               className="btn btn-outline"
@@ -293,7 +305,9 @@ export function FlowForm() {
                 } catch {}
                 setShowRestorePrompt(false);
               }}
-            >破棄して新規</button>
+            >
+              破棄して新規
+            </button>
           </div>
         )}
         <nav aria-label="ステップ">
@@ -301,25 +315,25 @@ export function FlowForm() {
             {steps.map((s, idx) => {
               const isSelected = idx === step;
               const isLast = idx === steps.length - 1;
-              const fieldsToCheck = (requiredFieldsByStep[s.key] ?? s.fields);
-              const isFieldsComplete = fieldsToCheck.length === 0 || fieldsToCheck.every((f) => {
-                const v = (watched as unknown as Record<string, unknown>)[f as string];
-                const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
-                return v !== null && v !== undefined && String(v) !== "" && !hasError;
-              });
-              const arePreviousStepsComplete = steps
-                .slice(0, steps.length - 1)
-                .every((ps) => {
-                  const prevFieldsToCheck = (requiredFieldsByStep[ps.key] ?? ps.fields);
-                  if (prevFieldsToCheck.length === 0) return true;
-                  return prevFieldsToCheck.every((f) => {
+              const fieldsToCheck = requiredFieldsByStep[s.key] ?? s.fields;
+              const isFieldsComplete =
+                fieldsToCheck.length === 0 ||
+                fieldsToCheck.every((f) => {
                   const v = (watched as unknown as Record<string, unknown>)[f as string];
                   const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
                   return v !== null && v !== undefined && String(v) !== "" && !hasError;
-                  });
                 });
+              const arePreviousStepsComplete = steps.slice(0, steps.length - 1).every((ps) => {
+                const prevFieldsToCheck = requiredFieldsByStep[ps.key] ?? ps.fields;
+                if (prevFieldsToCheck.length === 0) return true;
+                return prevFieldsToCheck.every((f) => {
+                  const v = (watched as unknown as Record<string, unknown>)[f as string];
+                  const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
+                  return v !== null && v !== undefined && String(v) !== "" && !hasError;
+                });
+              });
               const isComplete = isLast ? arePreviousStepsComplete : isFieldsComplete;
-              const badgeText = isLast ? (isComplete ? "確認OK" : "確認待ち") : (isComplete ? "完了" : "未完了");
+              const badgeText = isLast ? (isComplete ? "確認OK" : "確認待ち") : isComplete ? "完了" : "未完了";
               return (
                 <li key={s.key} aria-current={isSelected ? "step" : undefined} className={`pb-2 ${isSelected ? "border-b-2 border-blue-600" : "border-b border-transparent"}`}>
                   <button
@@ -342,164 +356,252 @@ export function FlowForm() {
         <div className="grid grid-cols-2 gap-4 max-w-3xl">
           {step === 0 && (
             <>
-          <label className="flex flex-col text-sm gap-1">
-            <span>年度</span>
-            <select className="select" {...register("taxYear", { setValueAs: (v) => Number(v) as TaxYear })} defaultValue={2024}>
-              <option value={2023}>2023</option>
-              <option value={2024}>2024</option>
-              <option value={2025}>2025</option>
-            </select>
-          </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>年度</span>
+                <select className="select" {...register("taxYear", { setValueAs: (v) => Number(v) as TaxYear })} defaultValue={2024}>
+                  <option value={2023}>2023</option>
+                  <option value={2024}>2024</option>
+                  <option value={2025}>2025</option>
+                </select>
+              </label>
 
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              総所得金額等
-              <span className="ml-1 text-gray-400 cursor-help" title="医療費控除の足切り(10万円または所得の5%の小さい方)の計算に使用します。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.totalIncome} aria-describedby="totalIncome-error" className="input" {...register("totalIncome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("totalIncome")} />
-            {errors.totalIncome && <span id="totalIncome-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.totalIncome.message as string}</span>}
-          </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  総所得金額等
+                  <span className="ml-1 text-gray-400 cursor-help" title="医療費控除の足切り(10万円または所得の5%の小さい方)の計算に使用します。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.totalIncome} aria-describedby="totalIncome-error" className="input" {...register("totalIncome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("totalIncome")} />
+                {errors.totalIncome && (
+                  <span id="totalIncome-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.totalIncome.message as string}
+                  </span>
+                )}
+              </label>
             </>
           )}
 
           {step === 1 && (
             <>
-          <div className="col-span-2 section-title"><span className="icon">🩺</span>医療費控除</div>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              医療費(支払額)
-              <span className="ml-1 text-gray-400 cursor-help" title="対象医療費の自己負担分合計を入力します。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalPaid} aria-describedby="medicalPaid-error" className="input" {...register("medicalPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger(["medicalPaid","medicalReimbursed"]) } />
-            {errors.medicalPaid && <span id="medicalPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.medicalPaid.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              医療費(補填額)
-              <span className="ml-1 text-gray-400 cursor-help" title="医療保険等で補填された金額を入力します。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalReimbursed} aria-describedby="medicalReimbursed-error" className="input" {...register("medicalReimbursed", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger(["medicalPaid","medicalReimbursed"]) } />
-            {errors.medicalReimbursed && <span id="medicalReimbursed-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.medicalReimbursed.message as string}</span>}
-          </label>
+              <div className="col-span-2 section-title">
+                <span className="icon">🩺</span>医療費控除
+              </div>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  医療費(支払額)
+                  <span className="ml-1 text-gray-400 cursor-help" title="対象医療費の自己負担分合計を入力します。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalPaid} aria-describedby="medicalPaid-error" className="input" {...register("medicalPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger(["medicalPaid", "medicalReimbursed"])} />
+                {errors.medicalPaid && (
+                  <span id="medicalPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.medicalPaid.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  医療費(補填額)
+                  <span className="ml-1 text-gray-400 cursor-help" title="医療保険等で補填された金額を入力します。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalReimbursed} aria-describedby="medicalReimbursed-error" className="input" {...register("medicalReimbursed", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger(["medicalPaid", "medicalReimbursed"])} />
+                {errors.medicalReimbursed && (
+                  <span id="medicalReimbursed-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.medicalReimbursed.message as string}
+                  </span>
+                )}
+              </label>
             </>
           )}
 
           {step === 2 && (
             <>
-          <div className="col-span-2 section-title"><span className="icon">🛡️</span>社会保険・iDeCo・小規模共済</div>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              社会保険料 合計
-              <span className="ml-1 text-gray-400 cursor-help" title="国民年金、国民健康保険、介護保険等の自己負担分の合計。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.socialPaid} aria-describedby="socialPaid-error" className="input" {...register("socialPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("socialPaid")} />
-            {errors.socialPaid && <span id="socialPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.socialPaid.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              iDeCo 掛金
-              <span className="ml-1 text-gray-400 cursor-help" title="年内に拠出した個人型確定拠出年金の掛金。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.idecoPaid} aria-describedby="idecoPaid-error" className="input" {...register("idecoPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("idecoPaid")} />
-            {errors.idecoPaid && <span id="idecoPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.idecoPaid.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              小規模企業共済 掛金
-              <span className="ml-1 text-gray-400 cursor-help" title="年内に支払った小規模企業共済等の掛金。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.sbmPaid} aria-describedby="sbmPaid-error" className="input" {...register("sbmPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("sbmPaid")} />
-            {errors.sbmPaid && <span id="sbmPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.sbmPaid.message as string}</span>}
-          </label>
+              <div className="col-span-2 section-title">
+                <span className="icon">🛡️</span>社会保険・iDeCo・小規模共済
+              </div>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  社会保険料 合計
+                  <span className="ml-1 text-gray-400 cursor-help" title="国民年金、国民健康保険、介護保険等の自己負担分の合計。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.socialPaid} aria-describedby="socialPaid-error" className="input" {...register("socialPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("socialPaid")} />
+                {errors.socialPaid && (
+                  <span id="socialPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.socialPaid.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  iDeCo 掛金
+                  <span className="ml-1 text-gray-400 cursor-help" title="年内に拠出した個人型確定拠出年金の掛金。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.idecoPaid} aria-describedby="idecoPaid-error" className="input" {...register("idecoPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("idecoPaid")} />
+                {errors.idecoPaid && (
+                  <span id="idecoPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.idecoPaid.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  小規模企業共済 掛金
+                  <span className="ml-1 text-gray-400 cursor-help" title="年内に支払った小規模企業共済等の掛金。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.sbmPaid} aria-describedby="sbmPaid-error" className="input" {...register("sbmPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("sbmPaid")} />
+                {errors.sbmPaid && (
+                  <span id="sbmPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.sbmPaid.message as string}
+                  </span>
+                )}
+              </label>
             </>
           )}
 
           {step === 3 && (
             <>
-          <div className="col-span-2 section-title"><span className="icon">💙</span>生命保険料控除</div>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              一般(新制度)
-              <span className="ml-1 text-gray-400 cursor-help" title="一般生命保険料(新制度)の支払額。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeGeneral} aria-describedby="lifeGeneral-error" className="input" {...register("lifeGeneral", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeGeneral")} />
-            {errors.lifeGeneral && <span id="lifeGeneral-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifeGeneral.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              個人年金(新制度)
-              <span className="ml-1 text-gray-400 cursor-help" title="個人年金保険料(新制度)の支払額。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifePension} aria-describedby="lifePension-error" className="input" {...register("lifePension", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifePension")} />
-            {errors.lifePension && <span id="lifePension-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifePension.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              介護医療(新制度)
-              <span className="ml-1 text-gray-400 cursor-help" title="介護医療保険料(新制度)の支払額。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeMedical} aria-describedby="lifeMedical-error" className="input" {...register("lifeMedical", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeMedical")} />
-            {errors.lifeMedical && <span id="lifeMedical-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifeMedical.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              旧制度
-              <span className="ml-1 text-gray-400 cursor-help" title="旧制度(2011年以前契約)の対象保険料。簡易計上。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeOld} aria-describedby="lifeOld-error" className="input" {...register("lifeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeOld")} />
-            {errors.lifeOld && <span id="lifeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifeOld.message as string}</span>}
-          </label>
+              <div className="col-span-2 section-title">
+                <span className="icon">💙</span>生命保険料控除
+              </div>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  一般(新制度)
+                  <span className="ml-1 text-gray-400 cursor-help" title="一般生命保険料(新制度)の支払額。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeGeneral} aria-describedby="lifeGeneral-error" className="input" {...register("lifeGeneral", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeGeneral")} />
+                {errors.lifeGeneral && (
+                  <span id="lifeGeneral-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.lifeGeneral.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  個人年金(新制度)
+                  <span className="ml-1 text-gray-400 cursor-help" title="個人年金保険料(新制度)の支払額。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifePension} aria-describedby="lifePension-error" className="input" {...register("lifePension", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifePension")} />
+                {errors.lifePension && (
+                  <span id="lifePension-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.lifePension.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  介護医療(新制度)
+                  <span className="ml-1 text-gray-400 cursor-help" title="介護医療保険料(新制度)の支払額。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeMedical} aria-describedby="lifeMedical-error" className="input" {...register("lifeMedical", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeMedical")} />
+                {errors.lifeMedical && (
+                  <span id="lifeMedical-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.lifeMedical.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  旧制度
+                  <span className="ml-1 text-gray-400 cursor-help" title="旧制度(2011年以前契約)の対象保険料。簡易計上。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeOld} aria-describedby="lifeOld-error" className="input" {...register("lifeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeOld")} />
+                {errors.lifeOld && (
+                  <span id="lifeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.lifeOld.message as string}
+                  </span>
+                )}
+              </label>
             </>
           )}
 
           {step === 4 && (
             <>
-          <div className="col-span-2 section-title"><span className="icon">🏠</span>地震保険料控除</div>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              地震保険料(新制度)
-              <span className="ml-1 text-gray-400 cursor-help" title="当年分の地震保険料。上限あり。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.quakePaid} aria-describedby="quakePaid-error" className="input" {...register("quakePaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("quakePaid")} />
-            {errors.quakePaid && <span id="quakePaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.quakePaid.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              旧長期損害保険等
-              <span className="ml-1 text-gray-400 cursor-help" title="旧制度の長期損害保険等。上限あり。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.quakeOld} aria-describedby="quakeOld-error" className="input" {...register("quakeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("quakeOld")} />
-            {errors.quakeOld && <span id="quakeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.quakeOld.message as string}</span>}
-          </label>
+              <div className="col-span-2 section-title">
+                <span className="icon">🏠</span>地震保険料控除
+              </div>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  地震保険料(新制度)
+                  <span className="ml-1 text-gray-400 cursor-help" title="当年分の地震保険料。上限あり。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.quakePaid} aria-describedby="quakePaid-error" className="input" {...register("quakePaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("quakePaid")} />
+                {errors.quakePaid && (
+                  <span id="quakePaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.quakePaid.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  旧長期損害保険等
+                  <span className="ml-1 text-gray-400 cursor-help" title="旧制度の長期損害保険等。上限あり。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.quakeOld} aria-describedby="quakeOld-error" className="input" {...register("quakeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("quakeOld")} />
+                {errors.quakeOld && (
+                  <span id="quakeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.quakeOld.message as string}
+                  </span>
+                )}
+              </label>
             </>
           )}
 
           {step === 5 && (
             <>
-          <div className="col-span-2 section-title"><span className="icon">🎁</span>寄附金控除</div>
-          <label className="flex flex-col text-sm gap-1">
-            <span>
-              ふるさと納税
-              <span className="ml-1 text-gray-400 cursor-help" title="住民税側の特例控除はMVP対象外です。">?</span>
-            </span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.donationHome} aria-describedby="donationHome-error" className="input" {...register("donationHome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("donationHome")} />
-            {errors.donationHome && <span id="donationHome-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.donationHome.message as string}</span>}
-          </label>
-          <label className="flex flex-col text-sm gap-1">
-            <span>その他寄附</span>
-            <input type="text" inputMode="numeric" aria-invalid={!!errors.donationOther} aria-describedby="donationOther-error" className="input" {...register("donationOther", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("donationOther")} />
-            {errors.donationOther && <span id="donationOther-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.donationOther.message as string}</span>}
-          </label>
+              <div className="col-span-2 section-title">
+                <span className="icon">🎁</span>寄附金控除
+              </div>
+              <label className="flex flex-col text-sm gap-1">
+                <span>
+                  ふるさと納税
+                  <span className="ml-1 text-gray-400 cursor-help" title="住民税側の特例控除はMVP対象外です。">
+                    ?
+                  </span>
+                </span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.donationHome} aria-describedby="donationHome-error" className="input" {...register("donationHome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("donationHome")} />
+                {errors.donationHome && (
+                  <span id="donationHome-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.donationHome.message as string}
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col text-sm gap-1">
+                <span>その他寄附</span>
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.donationOther} aria-describedby="donationOther-error" className="input" {...register("donationOther", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("donationOther")} />
+                {errors.donationOther && (
+                  <span id="donationOther-error" role="alert" aria-live="polite" className="text-xs text-red-600">
+                    {errors.donationOther.message as string}
+                  </span>
+                )}
+              </label>
             </>
           )}
         </div>
         <div className="flex items-center gap-3">
           {step > 0 && (
-            <button
-              type="button"
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="btn btn-outline"
-            >
+            <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} className="btn btn-outline">
               戻る
             </button>
           )}
@@ -559,9 +661,7 @@ export function FlowForm() {
           >
             サンプル値を入れる
           </button>
-          <div className="ml-auto text-xs text-gray-500">
-            自動保存: {new Date().toLocaleTimeString()}
-          </div>
+          <div className="ml-auto text-xs text-gray-500">自動保存: {new Date().toLocaleTimeString()}</div>
         </div>
       </form>
 
@@ -677,5 +777,3 @@ function labelOf(key: DeductionsResult["items"][number]["key"]): string {
       return key;
   }
 }
-
-
