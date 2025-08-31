@@ -169,20 +169,29 @@ export function FlowForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 card p-5">
         <nav aria-label="ステップ">
           <ul className="flex items-center gap-6 text-sm overflow-x-auto">
-            {steps.map((s, idx) => (
-              <li key={s.key} aria-current={idx === step ? "step" : undefined} className="pb-1 border-b">
-                <button
-                  type="button"
-                  className={`px-0 py-1 ${idx === step ? "text-gray-900 border-b-2 border-gray-900" : "text-gray-600 hover:text-gray-900"}`}
-                  onClick={async () => {
-                    const valid = await trigger(steps[step].fields);
-                    if (valid) setStep(idx);
-                  }}
-                >
-                  {idx + 1}. {s.label}
-                </button>
-              </li>
-            ))}
+            {steps.map((s, idx) => {
+              const isSelected = idx === step;
+              const isComplete = s.fields.length > 0 && s.fields.every((f) => {
+                const v = (watched as unknown as Record<string, unknown>)[f as string];
+                const hasError = Boolean((errors as unknown as Record<string, unknown>)[f as string]);
+                return v !== null && v !== undefined && String(v) !== "" && !hasError;
+              });
+              return (
+                <li key={s.key} aria-current={isSelected ? "step" : undefined} className={`pb-2 ${isSelected ? "border-b-2 border-blue-600" : "border-b border-transparent"}`}>
+                  <button
+                    type="button"
+                    className={`px-0 py-1 ${isSelected ? "text-gray-900" : "text-muted hover:text-gray-900"}`}
+                    onClick={async () => {
+                      const valid = await trigger(steps[step].fields);
+                      if (valid) setStep(idx);
+                    }}
+                  >
+                    {idx + 1}. {s.label}
+                  </button>
+                  <span className={`ml-2 align-middle badge ${isComplete ? "badge-primary" : "badge-neutral"}`}>{isComplete ? "完了" : "未完了"}</span>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
@@ -361,7 +370,7 @@ export function FlowForm() {
                   if (firstInvalid) setFocus(firstInvalid);
                 }
               }}
-              className="btn btn-outline"
+              className="btn btn-primary"
             >
               次へ
             </button>
@@ -378,7 +387,7 @@ export function FlowForm() {
       </form>
 
       {result && (
-        <div className="border-t p-0 overflow-hidden">
+        <div className="card p-0 overflow-hidden">
           <div className="sticky top-0 bg-white/80 backdrop-blur p-4 flex items-center justify-between">
             <div className="font-semibold">計算結果</div>
             <div className="text-base">
@@ -413,7 +422,7 @@ export function FlowForm() {
                   reset();
                   setResult(null);
                 }}
-                className="text-sm underline"
+                className="btn btn-outline"
               >
                 入力をクリア
               </button>
@@ -432,7 +441,7 @@ export function FlowForm() {
                     a.remove();
                     URL.revokeObjectURL(url);
                   }}
-                  className="inline-flex items-center border px-3 py-2 text-sm hover:bg-blue-50"
+                  className="btn btn-outline"
                 >
                   JSONをダウンロード
                 </button>
@@ -456,7 +465,7 @@ export function FlowForm() {
                     a.remove();
                     URL.revokeObjectURL(url);
                   }}
-                  className="inline-flex items-center border px-3 py-2 text-sm hover:bg-blue-50"
+                  className="btn btn-outline"
                 >
                   PDFをダウンロード
                 </button>
