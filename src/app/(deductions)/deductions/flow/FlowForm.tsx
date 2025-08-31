@@ -60,7 +60,7 @@ export function FlowForm() {
 
   const STORAGE_KEY = "deductions-flow:v1";
 
-  const { register, handleSubmit, reset, watch, trigger, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, trigger, setFocus, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(flowFormSchema),
     defaultValues: {
       taxYear: 2024,
@@ -91,6 +91,11 @@ export function FlowForm() {
     { key: "review", label: "確認", fields: [] },
   ];
   const [step, setStep] = useState(0);
+  useEffect(() => {
+    const first = steps[step]?.fields[0];
+    if (first) setFocus(first);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // 初回マウント時に保存済みドラフトを復元
   useEffect(() => {
@@ -162,13 +167,15 @@ export function FlowForm() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="flex items-center gap-2 text-sm overflow-x-auto">
-          {steps.map((s, idx) => (
-            <div key={s.key} className={`px-3 py-1 border transition-colors ${idx === step ? "bg-blue-600 text-white" : "bg-white hover:bg-blue-50"}`}>
-              {idx + 1}. {s.label}
-            </div>
-          ))}
-        </div>
+        <nav aria-label="ステップ">
+          <ul className="flex items-center gap-2 text-sm overflow-x-auto">
+            {steps.map((s, idx) => (
+              <li key={s.key} aria-current={idx === step ? "step" : undefined} className={`px-3 py-1 border transition-colors ${idx === step ? "bg-blue-600 text-white" : "bg-white hover:bg-blue-50"}`}>
+                {idx + 1}. {s.label}
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         <div className="grid grid-cols-2 gap-4 max-w-3xl">
           {step === 0 && (
@@ -187,8 +194,8 @@ export function FlowForm() {
               総所得金額等
               <span className="ml-1 text-gray-400 cursor-help" title="医療費控除の足切り(10万円または所得の5%の小さい方)の計算に使用します。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("totalIncome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.totalIncome && <span className="text-xs text-red-600">{errors.totalIncome.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.totalIncome} aria-describedby="totalIncome-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("totalIncome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.totalIncome && <span id="totalIncome-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.totalIncome.message as string}</span>}
           </label>
             </>
           )}
@@ -201,16 +208,16 @@ export function FlowForm() {
               医療費(支払額)
               <span className="ml-1 text-gray-400 cursor-help" title="対象医療費の自己負担分合計を入力します。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("medicalPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.medicalPaid && <span className="text-xs text-red-600">{errors.medicalPaid.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalPaid} aria-describedby="medicalPaid-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("medicalPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.medicalPaid && <span id="medicalPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.medicalPaid.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               医療費(補填額)
               <span className="ml-1 text-gray-400 cursor-help" title="医療保険等で補填された金額を入力します。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("medicalReimbursed", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.medicalReimbursed && <span className="text-xs text-red-600">{errors.medicalReimbursed.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalReimbursed} aria-describedby="medicalReimbursed-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("medicalReimbursed", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.medicalReimbursed && <span id="medicalReimbursed-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.medicalReimbursed.message as string}</span>}
           </label>
             </>
           )}
@@ -223,24 +230,24 @@ export function FlowForm() {
               社会保険料 合計
               <span className="ml-1 text-gray-400 cursor-help" title="国民年金、国民健康保険、介護保険等の自己負担分の合計。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("socialPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.socialPaid && <span className="text-xs text-red-600">{errors.socialPaid.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.socialPaid} aria-describedby="socialPaid-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("socialPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.socialPaid && <span id="socialPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.socialPaid.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               iDeCo 掛金
               <span className="ml-1 text-gray-400 cursor-help" title="年内に拠出した個人型確定拠出年金の掛金。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("idecoPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.idecoPaid && <span className="text-xs text-red-600">{errors.idecoPaid.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.idecoPaid} aria-describedby="idecoPaid-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("idecoPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.idecoPaid && <span id="idecoPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.idecoPaid.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               小規模企業共済 掛金
               <span className="ml-1 text-gray-400 cursor-help" title="年内に支払った小規模企業共済等の掛金。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("sbmPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.sbmPaid && <span className="text-xs text-red-600">{errors.sbmPaid.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.sbmPaid} aria-describedby="sbmPaid-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("sbmPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.sbmPaid && <span id="sbmPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.sbmPaid.message as string}</span>}
           </label>
             </>
           )}
@@ -253,32 +260,32 @@ export function FlowForm() {
               一般(新制度)
               <span className="ml-1 text-gray-400 cursor-help" title="一般生命保険料(新制度)の支払額。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeGeneral", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.lifeGeneral && <span className="text-xs text-red-600">{errors.lifeGeneral.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeGeneral} aria-describedby="lifeGeneral-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeGeneral", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifeGeneral && <span id="lifeGeneral-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifeGeneral.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               個人年金(新制度)
               <span className="ml-1 text-gray-400 cursor-help" title="個人年金保険料(新制度)の支払額。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifePension", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.lifePension && <span className="text-xs text-red-600">{errors.lifePension.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifePension} aria-describedby="lifePension-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifePension", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifePension && <span id="lifePension-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifePension.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               介護医療(新制度)
               <span className="ml-1 text-gray-400 cursor-help" title="介護医療保険料(新制度)の支払額。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeMedical", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.lifeMedical && <span className="text-xs text-red-600">{errors.lifeMedical.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeMedical} aria-describedby="lifeMedical-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeMedical", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifeMedical && <span id="lifeMedical-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifeMedical.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               旧制度
               <span className="ml-1 text-gray-400 cursor-help" title="旧制度(2011年以前契約)の対象保険料。簡易計上。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.lifeOld && <span className="text-xs text-red-600">{errors.lifeOld.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeOld} aria-describedby="lifeOld-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("lifeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.lifeOld && <span id="lifeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.lifeOld.message as string}</span>}
           </label>
             </>
           )}
@@ -291,16 +298,16 @@ export function FlowForm() {
               地震保険料(新制度)
               <span className="ml-1 text-gray-400 cursor-help" title="当年分の地震保険料。上限あり。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("quakePaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.quakePaid && <span className="text-xs text-red-600">{errors.quakePaid.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.quakePaid} aria-describedby="quakePaid-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("quakePaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.quakePaid && <span id="quakePaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.quakePaid.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>
               旧長期損害保険等
               <span className="ml-1 text-gray-400 cursor-help" title="旧制度の長期損害保険等。上限あり。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("quakeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.quakeOld && <span className="text-xs text-red-600">{errors.quakeOld.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.quakeOld} aria-describedby="quakeOld-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("quakeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.quakeOld && <span id="quakeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.quakeOld.message as string}</span>}
           </label>
             </>
           )}
@@ -313,13 +320,13 @@ export function FlowForm() {
               ふるさと納税
               <span className="ml-1 text-gray-400 cursor-help" title="住民税側の特例控除はMVP対象外です。">?</span>
             </span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("donationHome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.donationHome && <span className="text-xs text-red-600">{errors.donationHome.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.donationHome} aria-describedby="donationHome-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("donationHome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.donationHome && <span id="donationHome-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.donationHome.message as string}</span>}
           </label>
           <label className="flex flex-col text-sm gap-1">
             <span>その他寄附</span>
-            <input type="text" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("donationOther", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
-            {errors.donationOther && <span className="text-xs text-red-600">{errors.donationOther.message as string}</span>}
+            <input type="text" inputMode="numeric" aria-invalid={!!errors.donationOther} aria-describedby="donationOther-error" className="border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" {...register("donationOther", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
+            {errors.donationOther && <span id="donationOther-error" role="alert" aria-live="polite" className="text-xs text-red-600">{errors.donationOther.message as string}</span>}
           </label>
             </>
           )}
@@ -340,6 +347,10 @@ export function FlowForm() {
               onClick={async () => {
                 const valid = await trigger(steps[step].fields);
                 if (valid) setStep((s) => Math.min(steps.length - 1, s + 1));
+                else {
+                  const firstInvalid = steps[step].fields.find((n) => (errors as unknown as Record<string, unknown>)[n as string]);
+                  if (firstInvalid) setFocus(firstInvalid);
+                }
               }}
               className="inline-flex items-center bg-blue-600 text-white px-4 py-2 text-sm shadow hover:bg-blue-700"
             >
