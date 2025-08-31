@@ -41,6 +41,15 @@ pnpm e2e       # E2Eテスト（Playwright）
 
 本ツールの計算は参考値です。最終的な申告内容は国税庁の案内および申告書様式をご確認のうえご判断ください。住民税側の特例や詳細控除は対象外です。
 
+### ブラウザサポート
+
+- 最新の Chrome / Edge / Firefox / Safari
+
+### 既知の制約
+
+- E2E のPDFダウンロードは環境依存で不安定のため、JSON生成トリガのみを検証
+- PDF APIはUIからの呼び出しを前提としており、E2Eでの直接叩きは非推奨
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
