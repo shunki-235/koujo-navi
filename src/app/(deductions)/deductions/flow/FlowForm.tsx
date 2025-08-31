@@ -12,9 +12,19 @@ import { z } from "zod";
 const flowFormSchema = z
   .object({
     taxYear: z.union([z.literal(2023), z.literal(2024), z.literal(2025)]),
-    totalIncome: z.number().int().min(0, "0以上で入力してください").nullable(),
+    totalIncome: z
+      .number()
+      .int()
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v !== null, { path: ["totalIncome"], message: "入力してください" }),
     medicalPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
-    medicalReimbursed: z.number().int().min(0, "0以上で入力してください").nullable(),
+    medicalReimbursed: z
+      .number()
+      .int()
+      .min(0, "0以上で入力してください")
+      .nullable()
+      .refine((v) => v !== null, { path: ["medicalReimbursed"], message: "入力してください" }),
     socialPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
     idecoPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
     sbmPaid: z.number().int().min(0, "0以上で入力してください").nullable(),
