@@ -3,7 +3,7 @@ import { calculateLifeInsuranceDeduction } from "@/lib/deductions/calc/lifeInsur
 import { params2024 } from "@/lib/deductions/params/y2024";
 
 describe("life insurance deduction", () => {
-  it("applies bracket per category and clamps per-category max", () => {
+  it("各枠の段階式（新制度）を適用し、枠上限で打ち止め", () => {
     const res = calculateLifeInsuranceDeduction(
       {
         basic: { taxYear: 2024 },
@@ -11,8 +11,9 @@ describe("life insurance deduction", () => {
       },
       params2024
     );
-    // 12,000 => 12,000 ; 32,000 => 0.5*32000+6000=22000 ; 56,000 => 0.25*56000+14000=28000 ; total 62,000
-    expect(res.amount).toBe(62_000);
+    // 新制度の段階式（所得税）: 20,000/40,000/80,000 のしきい値
+    // 12,000 => 12,000 ; 32,000 => 0.5*32,000+10,000=26,000 ; 56,000 => 0.25*56,000+20,000=34,000 ; total 72,000
+    expect(res.amount).toBe(72_000);
   });
 
   it("clamps total to 120,000 and notes message; old limited to 50,000", () => {

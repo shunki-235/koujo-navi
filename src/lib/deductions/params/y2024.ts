@@ -2,11 +2,11 @@ import { YearParams } from "@/types/deductions";
 
 export const params2024: YearParams = {
   lifeInsurance: {
-    thresholds: [12000, 32000, 56000],
+    thresholds: [20000, 40000, 80000],
     formulas: [
       (p) => p,
-      (p) => Math.floor(p * 0.5 + 6000),
-      (p) => Math.floor(p * 0.25 + 14000),
+      (p) => Math.floor(p * 0.5 + 10000),
+      (p) => Math.floor(p * 0.25 + 20000),
       () => 40000,
     ],
     maxPerCategory: 40000,

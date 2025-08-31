@@ -149,6 +149,17 @@ export async function runCalculation(input: DeductionsInput): Promise<Deductions
 
 ## 参考
 - 実装で採用予定: Next.js App Router、Server Actions、`react-hook-form`、`zod`、TypeScript strict。
+
+### 根拠リンク（国税庁タックスアンサー）
+- 医療費控除: No.1120/1119（明細書・手続）
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1120.htm
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1119.htm
+- 生命保険料控除: No.1140（新契約/旧契約の区分、計算方法・上限）
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1140.htm
+- 地震保険料控除: No.1145（上限5万円、旧長期損害保険の経過措置）
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1145.htm
+- 寄附金控除: No.1150（2,000円自己負担、総所得金額等の40%上限）
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1150.htm
 - ディレクトリ例:
 ```
 app/
