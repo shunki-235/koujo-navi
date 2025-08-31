@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { ThemeToggle } from "./ThemeToggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
             <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
               <Link href="/deductions/flow" className="hover:opacity-70">入力</Link>
             </nav>
+            <div className="ml-4"><ThemeToggle /></div>
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-6 py-8">
