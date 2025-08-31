@@ -6,7 +6,7 @@ export default function Home() {
         <div className="px-8 py-12">
           <span className="badge badge-primary">クラウド確定申告の体験を、もっと自由に</span>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">控除ナビ</h1>
-          <p className="mt-2 text-base text-muted">シンプルな入力で所得控除を自動計算。医療費・保険・寄附金などをまとめてサクッと。</p>
+          <p className="mt-2 text-base text-muted">質問に沿って入力するだけで、医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金の控除額を自動計算します。</p>
           <div className="flex flex-wrap gap-3 pt-5 text-sm">
             <a href="/deductions/flow" className="btn btn-primary">すぐ入力を始める</a>
             {/* ダッシュボード導線はTOP統一のため削除 */}
@@ -29,6 +29,12 @@ export default function Home() {
           <div className="text-sm font-semibold">自動保存＆復元</div>
           <p className="mt-1 text-sm text-muted">離脱しても自動復元。E2Eテストで回帰を防止。</p>
         </div>
+      </div>
+
+      {/* Notice */}
+      <div className="card p-5">
+        <div className="text-sm font-semibold">ご注意</div>
+        <p className="mt-1 text-xs text-muted">本ツールの計算は参考値です。最終的な申告内容は、国税庁の案内および申告書様式をご確認のうえご判断ください。住民税側の特例や詳細控除は対象外です。</p>
       </div>
     </section>
   );

@@ -153,6 +153,8 @@ export async function runCalculation(input: DeductionsInput): Promise<Deductions
 - 実装で採用予定: Next.js App Router、Server Actions、`react-hook-form`、`zod`、TypeScript strict。
 
 ### 根拠リンク（国税庁タックスアンサー）
+- 注意・免責
+  - 本リポジトリの計算は学習/検証目的であり、実際の確定申告における最終判断は申告者の責任で行ってください。住民税側の特例や詳細控除は対象外です。
 - 医療費控除: No.1120/1119（明細書・手続）
   - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1120.htm
   - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1119.htm
