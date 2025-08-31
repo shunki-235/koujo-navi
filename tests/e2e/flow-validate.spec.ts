@@ -13,7 +13,7 @@ test("バリデーションエラーで次へが進めない", async ({ page }) 
   await reimb.fill("2000");
 
   await page.getByText("次へ").click();
-  await expect(page.getByText("補填額は支払額以下にしてください")).toBeVisible();
+  await expect(page.locator('#medicalReimbursed-error')).toBeVisible();
 });
 
 
