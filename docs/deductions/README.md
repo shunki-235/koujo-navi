@@ -163,6 +163,10 @@ export async function runCalculation(input: DeductionsInput): Promise<Deductions
   - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1145.htm
 - 寄附金控除: No.1150（2,000円自己負担、総所得金額等の40%上限）
   - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1150.htm
+- 社会保険料控除: No.1130（国民年金/健康保険/介護保険等の自己負担分の全額）
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1130.htm
+- 小規模企業共済等掛金控除（iDeCo含む）: No.1135（拠出掛金の全額）
+  - https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1135.htm
 - ディレクトリ例:
 ```
 app/
