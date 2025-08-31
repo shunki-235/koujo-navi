@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
   try {
     const { result, taxYear } = await req.json();
     const pdfDoc = await PDFDocument.create();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdfDoc.registerFontkit(fontkit as unknown as any);
     let page = pdfDoc.addPage([595.28, 841.89]); // A4
     let font = await pdfDoc.embedFont(StandardFonts.Helvetica);

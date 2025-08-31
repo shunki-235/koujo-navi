@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,10 +28,10 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
         <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur">
           <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
-            <a href="/" className="font-semibold tracking-tight text-gray-900">控除ナビ</a>
+            <Link href="/" className="font-semibold tracking-tight text-gray-900">控除ナビ</Link>
             <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
-              <a href="/deductions" className="hover:opacity-70">ダッシュボード</a>
-              <a href="/deductions/flow" className="hover:opacity-70">入力</a>
+              <Link href="/deductions" className="hover:opacity-70">ダッシュボード</Link>
+              <Link href="/deductions/flow" className="hover:opacity-70">入力</Link>
             </nav>
           </div>
         </header>
