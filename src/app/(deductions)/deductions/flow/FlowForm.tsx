@@ -12,8 +12,11 @@ import { z } from "zod";
 // 入力文字列(カンマ含む)を整数 or null に前処理するヘルパー
 const intNullable = z.preprocess((raw: unknown) => {
   if (raw === "" || raw == null) return null;
-  const s = typeof raw === "string" ? raw.replace(/,/g, "") : String(raw);
-  const n = Number(s);
+  const source = typeof raw === "string" ? raw : String(raw);
+  // 全角→半角、カンマ・空白除去
+  const zenkakuToHankaku = source.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xFEE0));
+  const normalized = zenkakuToHankaku.replace(/[\s,]/g, "");
+  const n = Number(normalized);
   return Number.isFinite(n) ? Math.trunc(n) : Number.NaN;
 }, z.number().int("整数で入力してください").min(0, "0以上で入力してください").nullable());
 
@@ -86,8 +89,8 @@ export function FlowForm() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(flowFormSchema),
-    mode: "onChange",
-    reValidateMode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       taxYear: 2024,
       totalIncome: null,
@@ -312,7 +315,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.totalIncome} aria-describedby="totalIncome-error" className="input" {...register("totalIncome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("totalIncome")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.totalIncome} aria-describedby="totalIncome-error" className="input" {...register("totalIncome")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.totalIncome && (
                   <span id="totalIncome-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.totalIncome.message as string}
@@ -334,7 +337,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalPaid} aria-describedby="medicalPaid-error" className="input" {...register("medicalPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger(["medicalPaid", "medicalReimbursed"])} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalPaid} aria-describedby="medicalPaid-error" className="input" {...register("medicalPaid")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.medicalPaid && (
                   <span id="medicalPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.medicalPaid.message as string}
@@ -348,7 +351,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalReimbursed} aria-describedby="medicalReimbursed-error" className="input" {...register("medicalReimbursed", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger(["medicalPaid", "medicalReimbursed"])} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.medicalReimbursed} aria-describedby="medicalReimbursed-error" className="input" {...register("medicalReimbursed")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.medicalReimbursed && (
                   <span id="medicalReimbursed-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.medicalReimbursed.message as string}
@@ -370,7 +373,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.socialPaid} aria-describedby="socialPaid-error" className="input" {...register("socialPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("socialPaid")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.socialPaid} aria-describedby="socialPaid-error" className="input" {...register("socialPaid")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.socialPaid && (
                   <span id="socialPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.socialPaid.message as string}
@@ -384,7 +387,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.idecoPaid} aria-describedby="idecoPaid-error" className="input" {...register("idecoPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("idecoPaid")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.idecoPaid} aria-describedby="idecoPaid-error" className="input" {...register("idecoPaid")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.idecoPaid && (
                   <span id="idecoPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.idecoPaid.message as string}
@@ -398,7 +401,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.sbmPaid} aria-describedby="sbmPaid-error" className="input" {...register("sbmPaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("sbmPaid")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.sbmPaid} aria-describedby="sbmPaid-error" className="input" {...register("sbmPaid")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.sbmPaid && (
                   <span id="sbmPaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.sbmPaid.message as string}
@@ -420,7 +423,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeGeneral} aria-describedby="lifeGeneral-error" className="input" {...register("lifeGeneral", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeGeneral")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeGeneral} aria-describedby="lifeGeneral-error" className="input" {...register("lifeGeneral")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.lifeGeneral && (
                   <span id="lifeGeneral-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.lifeGeneral.message as string}
@@ -434,7 +437,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifePension} aria-describedby="lifePension-error" className="input" {...register("lifePension", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifePension")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifePension} aria-describedby="lifePension-error" className="input" {...register("lifePension")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.lifePension && (
                   <span id="lifePension-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.lifePension.message as string}
@@ -448,7 +451,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeMedical} aria-describedby="lifeMedical-error" className="input" {...register("lifeMedical", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeMedical")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeMedical} aria-describedby="lifeMedical-error" className="input" {...register("lifeMedical")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.lifeMedical && (
                   <span id="lifeMedical-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.lifeMedical.message as string}
@@ -462,7 +465,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeOld} aria-describedby="lifeOld-error" className="input" {...register("lifeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("lifeOld")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.lifeOld} aria-describedby="lifeOld-error" className="input" {...register("lifeOld")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.lifeOld && (
                   <span id="lifeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.lifeOld.message as string}
@@ -484,7 +487,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.quakePaid} aria-describedby="quakePaid-error" className="input" {...register("quakePaid", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("quakePaid")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.quakePaid} aria-describedby="quakePaid-error" className="input" {...register("quakePaid")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.quakePaid && (
                   <span id="quakePaid-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.quakePaid.message as string}
@@ -498,7 +501,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.quakeOld} aria-describedby="quakeOld-error" className="input" {...register("quakeOld", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("quakeOld")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.quakeOld} aria-describedby="quakeOld-error" className="input" {...register("quakeOld")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.quakeOld && (
                   <span id="quakeOld-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.quakeOld.message as string}
@@ -520,7 +523,7 @@ export function FlowForm() {
                     ?
                   </span>
                 </span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.donationHome} aria-describedby="donationHome-error" className="input" {...register("donationHome", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("donationHome")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.donationHome} aria-describedby="donationHome-error" className="input" {...register("donationHome")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.donationHome && (
                   <span id="donationHome-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.donationHome.message as string}
@@ -529,7 +532,7 @@ export function FlowForm() {
               </label>
               <label className="flex flex-col text-sm gap-1">
                 <span>その他寄附</span>
-                <input type="text" inputMode="numeric" aria-invalid={!!errors.donationOther} aria-describedby="donationOther-error" className="input" {...register("donationOther", { setValueAs: toIntOrNull })} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} onChange={() => trigger("donationOther")} />
+                <input type="text" inputMode="numeric" aria-invalid={!!errors.donationOther} aria-describedby="donationOther-error" className="input" {...register("donationOther")} onFocus={onCurrencyFocus} onBlur={onCurrencyBlur} />
                 {errors.donationOther && (
                   <span id="donationOther-error" role="alert" aria-live="polite" className="text-xs text-red-600">
                     {errors.donationOther.message as string}
