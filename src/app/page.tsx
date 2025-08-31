@@ -18,8 +18,8 @@ export default function Home() {
       {/* Highlights */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="card p-5">
-          <div className="text-sm font-semibold">年度パラメータに準拠</div>
-          <p className="mt-1 text-sm text-muted">2023/2024/2025の根拠を明記し、境界値もテストで担保。</p>
+          <div className="text-sm font-semibold">最新の制度に対応</div>
+          <p className="mt-1 text-sm text-muted">2023〜2025年の制度に対応。選んだ年度にあわせて自動で計算します。</p>
         </div>
         <div className="card p-5">
           <div className="text-sm font-semibold">PDF/JSON出力</div>
@@ -27,7 +27,7 @@ export default function Home() {
         </div>
         <div className="card p-5">
           <div className="text-sm font-semibold">自動保存＆復元</div>
-          <p className="mt-1 text-sm text-muted">離脱しても自動復元。E2Eテストで回帰を防止。</p>
+          <p className="mt-1 text-sm text-muted">離脱しても自動復元。いつでも続きから再開できます。</p>
         </div>
       </div>
 
