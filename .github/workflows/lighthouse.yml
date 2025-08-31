@@ -23,10 +23,17 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
-      - name: Start server (port 3000)
-        run: pnpm start -- -p 3000 &
-      - name: Wait server ready
-        run: npx wait-on http://127.0.0.1:3000 --timeout 180000
+      - name: Start server (bind 127.0.0.1:3000)
+        run: pnpm start -- -p 3000 -H 127.0.0.1 > .next_server.log 2>&1 &
+      - name: Wait server ready (curl loop)
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              echo "Server is up"; exit 0;
+            fi
+            sleep 2
+          done
+          echo "Server failed to start in time" && cat .next_server.log && exit 1
       - name: Run Lighthouse CI
         run: pnpm lhci
 
