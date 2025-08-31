@@ -220,7 +220,7 @@ export function FlowForm() {
 
           {step === 1 && (
             <>
-          <div className="col-span-2 font-medium mt-4">医療費控除</div>
+          <div className="col-span-2 section-title"><span className="icon">🩺</span>医療費控除</div>
           <label className="flex flex-col text-sm gap-1">
             <span>
               医療費(支払額)
@@ -242,7 +242,7 @@ export function FlowForm() {
 
           {step === 2 && (
             <>
-          <div className="col-span-2 font-medium mt-4">社会保険・iDeCo・小規模共済</div>
+          <div className="col-span-2 section-title"><span className="icon">🛡️</span>社会保険・iDeCo・小規模共済</div>
           <label className="flex flex-col text-sm gap-1">
             <span>
               社会保険料 合計
@@ -272,7 +272,7 @@ export function FlowForm() {
 
           {step === 3 && (
             <>
-          <div className="col-span-2 font-medium mt-4">生命保険料控除</div>
+          <div className="col-span-2 section-title"><span className="icon">💙</span>生命保険料控除</div>
           <label className="flex flex-col text-sm gap-1">
             <span>
               一般(新制度)
@@ -310,7 +310,7 @@ export function FlowForm() {
 
           {step === 4 && (
             <>
-          <div className="col-span-2 font-medium mt-4">地震保険料控除</div>
+          <div className="col-span-2 section-title"><span className="icon">🏠</span>地震保険料控除</div>
           <label className="flex flex-col text-sm gap-1">
             <span>
               地震保険料(新制度)
@@ -332,7 +332,7 @@ export function FlowForm() {
 
           {step === 5 && (
             <>
-          <div className="col-span-2 font-medium mt-4">寄附金控除</div>
+          <div className="col-span-2 section-title"><span className="icon">🎁</span>寄附金控除</div>
           <label className="flex flex-col text-sm gap-1">
             <span>
               ふるさと納税
