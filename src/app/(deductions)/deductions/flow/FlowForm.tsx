@@ -60,6 +60,32 @@ function toIntOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? Math.trunc(n) : Number.NaN;
 }
 
+// 意味のある入力（初期状態ではない）か判定するためのフィールド集合（taxYearは除外）
+const MEANINGFUL_FIELDS: Array<keyof FormValues> = [
+  "totalIncome",
+  "medicalPaid",
+  "medicalReimbursed",
+  "socialPaid",
+  "idecoPaid",
+  "sbmPaid",
+  "lifeGeneral",
+  "lifePension",
+  "lifeMedical",
+  "lifeOld",
+  "quakePaid",
+  "quakeOld",
+  "donationHome",
+  "donationOther",
+];
+
+function hasMeaningfulDraft(v: Partial<FormValues> | null | undefined): boolean {
+  if (!v) return false;
+  return MEANINGFUL_FIELDS.some((k) => {
+    const val = v[k];
+    return val !== null && val !== undefined && String(val) !== "";
+  });
+}
+
 function onCurrencyFocus(e: FocusEvent<HTMLInputElement>) {
   e.currentTarget.value = e.currentTarget.value.replace(/,/g, "");
 }
@@ -146,24 +172,29 @@ export function FlowForm() {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<FormValues>;
-        setRestoreCandidate({
-          taxYear: (parsed.taxYear ?? 2024) as FormValues["taxYear"],
-          totalIncome: parsed.totalIncome ?? null,
-          medicalPaid: parsed.medicalPaid ?? null,
-          medicalReimbursed: parsed.medicalReimbursed ?? null,
-          socialPaid: parsed.socialPaid ?? null,
-          idecoPaid: parsed.idecoPaid ?? null,
-          sbmPaid: parsed.sbmPaid ?? null,
-          lifeGeneral: parsed.lifeGeneral ?? null,
-          lifePension: parsed.lifePension ?? null,
-          lifeMedical: parsed.lifeMedical ?? null,
-          lifeOld: parsed.lifeOld ?? null,
-          quakePaid: parsed.quakePaid ?? null,
-          quakeOld: parsed.quakeOld ?? null,
-          donationHome: parsed.donationHome ?? null,
-          donationOther: parsed.donationOther ?? null,
-        });
-        setShowRestorePrompt(true);
+        if (hasMeaningfulDraft(parsed)) {
+          setRestoreCandidate({
+            taxYear: (parsed.taxYear ?? 2024) as FormValues["taxYear"],
+            totalIncome: parsed.totalIncome ?? null,
+            medicalPaid: parsed.medicalPaid ?? null,
+            medicalReimbursed: parsed.medicalReimbursed ?? null,
+            socialPaid: parsed.socialPaid ?? null,
+            idecoPaid: parsed.idecoPaid ?? null,
+            sbmPaid: parsed.sbmPaid ?? null,
+            lifeGeneral: parsed.lifeGeneral ?? null,
+            lifePension: parsed.lifePension ?? null,
+            lifeMedical: parsed.lifeMedical ?? null,
+            lifeOld: parsed.lifeOld ?? null,
+            quakePaid: parsed.quakePaid ?? null,
+            quakeOld: parsed.quakeOld ?? null,
+            donationHome: parsed.donationHome ?? null,
+            donationOther: parsed.donationOther ?? null,
+          });
+          setShowRestorePrompt(true);
+        } else if (typeof window !== "undefined") {
+          // 初期状態のみの空ドラフトは保存しない
+          window.localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch {}
   }, []);
@@ -174,8 +205,13 @@ export function FlowForm() {
     const id = setTimeout(() => {
       try {
         if (typeof window !== "undefined") {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(watched));
-          setLastSavedAt(new Date().toLocaleTimeString());
+          if (hasMeaningfulDraft(watched)) {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(watched));
+            setLastSavedAt(new Date().toLocaleTimeString());
+          } else {
+            window.localStorage.removeItem(STORAGE_KEY);
+            setLastSavedAt("");
+          }
         }
       } catch {}
     }, 500);
