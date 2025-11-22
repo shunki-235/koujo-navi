@@ -12,13 +12,12 @@ MVPをプロダクション水準に仕上げ、将来の拡張（OCR/CSV/PDF体
   - 対象: `src/lib/deductions/params/{y2023,y2024,y2025}.ts`
   - 生命保険・地震保険・医療費（足切り・上限）などを最新法令で再確認しソース（国税庁/各制度要綱）をREADMEに明記。
 
-- **計算ロジックの単体テスト**（境界値・相関）
-  - 追加: `vitest`/`@testing-library/jest-dom`
-  - 対象: `src/lib/deductions/calc/*`
+- **計算ロジックの単体テスト**（境界値・相関の拡充）
+  - 既存の `tests/unit/*.test.ts` をベースに、`src/lib/deductions/calc/*` の境界ケース・相関ケースを追加。
   - ケース例: 医療費の足切り境界、生命保険(各段階/合算上限/旧制度上限)、寄附金の2,000円控除、地震保険の上限。
 
 - **E2Eテスト（Playwright）**
-  - シナリオ: 入力〜計算〜JSON/PDFダウンロード、未保存離脱→自動復元、検証エラーのブロック。
+  - 既存の `tests/e2e/*.spec.ts`（基本フロー/検証エラー/自動復元/ダウンロード/Axe）をベースに、入力〜計算〜JSON/PDFダウンロード、未保存離脱→自動復元、検証エラーのブロックなどの回帰ケースを継続的に追加。
   - ルート: `/deductions/flow` を主対象。
 
 - **入力の通貨フォーマット（見た目の千区切り）**
@@ -26,7 +25,7 @@ MVPをプロダクション水準に仕上げ、将来の拡張（OCR/CSV/PDF体
   - 対象: すべての金額フィールド（FlowForm）。
 
 - **PDF体裁の改善（日本語フォント）**
-  - `pdf-lib`でNotoSansJP等を埋め込み（サーバーの`public/fonts`等から読み込み）。
+  - 既存の `pdf-lib` + NotoSansJP 埋め込み（`public/fonts/NotoSansJP-Regular.ttf`、`src/app/api/export/deductions/pdf/route.ts`）を前提に、余白や行間、フォントサイズなどの読みやすさを調整。
   - レイアウト: タイトル/年度/合計/内訳テーブル/注記、フッターに発行日時。
 
 - **アクセシビリティ/UX**
@@ -61,14 +60,13 @@ MVPをプロダクション水準に仕上げ、将来の拡張（OCR/CSV/PDF体
 
 ## タスク詳細（抜粋）
 
-- テスト導入
-  - 依存: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom playwright`
-  - スクリプト: `"test": "vitest", "e2e": "playwright test"`
-  - 追加ディレクトリ: `tests/unit/`, `tests/e2e/`
+- テスト拡充
+  - 既存の `tests/unit/`, `tests/e2e/` をベースに、境界値・異常系・回帰バグの再現ケースを追加。
+  - ユニットテストは控除計算ロジックを、E2Eテストは `/deductions/flow` の主要シナリオ（入力→計算→JSON/PDFダウンロード、自動復元、検証エラー、A11y）をカバーする。
 
-- PDF改善
-  - フォント配置: `public/fonts/NotoSansJP-Regular.ttf`
-  - 読込と埋込: `src/app/api/export/deductions/pdf/route.ts`
+- PDF（実装/改善メモ）
+  - フォントは `public/fonts/NotoSansJP-Regular.ttf` に配置し、`src/app/api/export/deductions/pdf/route.ts` で読み込み・埋め込み済み。
+  - 今後は項目の並び・余白・テーブル線などの体裁を整え、印刷したときの視認性を高める。
 
 - 入力フォーマット
   - `FlowForm`で`onBlur`時にカンマ整形。保存値は数値を維持。
