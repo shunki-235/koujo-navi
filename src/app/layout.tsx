@@ -22,7 +22,15 @@ export const metadata: Metadata = {
     template: "%s | 控除ナビ",
   },
   description: "医療費・社会保険・iDeCo・小規模共済・生命/地震保険・寄附金などの所得控除を、シンプルな入力で自動計算できるツールです。",
-  robots: { index: true, follow: true },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
   alternates: { canonical: "/" },
   openGraph: {
     title: "控除ナビ | 所得控除の自動計算とPDF出力",
