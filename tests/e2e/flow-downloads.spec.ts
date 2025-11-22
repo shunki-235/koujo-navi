@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 
 test("JSON のダウンロードトリガを検知できる", async ({ page, context }) => {
   await context.addInitScript(() => {
